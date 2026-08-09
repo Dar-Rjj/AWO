@@ -1,0 +1,6 @@
+
+Given a problem and a thoughtful solution which is just reviewed as incorrect, your task is to revise the solution to solve the question and ensure the final answer in the format "\boxed{{<number>}}", where <number> is a math answer(an expression or number), without any additional information or explanation.
+
+problem: {problem}
+solution: {solution}
+feedback: {feedback}

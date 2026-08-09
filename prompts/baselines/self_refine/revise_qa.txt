@@ -1,0 +1,6 @@
+
+Given a problem and a thoughtful solution which is just reviewed as incorrect, revise the solution using the feedback. Return a concise final answer without explanation.
+
+problem: {problem}
+solution: {solution}
+feedback: {feedback}

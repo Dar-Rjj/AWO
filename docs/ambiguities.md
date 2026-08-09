@@ -167,3 +167,12 @@
   第一轮提示词；其他三个公开任务正确传入 peer context，DROP 实现缺失。
 - 决策：主表统一采用方法定义所要求的两轮讨论，把三个角色第一轮 thinking 显式传入各自
   第二轮，仍严格保持 7 次调用；代码任务的历史错绑仅在 `archive-faithful` 模式保留。
+
+## A-021：Self-Refine 的字典回填与末轮语义
+
+- 状态：`resolved-for-primary`
+- 现象：历史四任务把 `{"solution": ...}` 整个字典插入 review/revise prompt，而非只传答案
+  文本；循环在第三次 review 为 false 时仍执行 revise，随后直接返回该未经复审的答案。
+- 决策：主协议向 review/revise 显式传递 solution 文本；保持最多三轮和末轮 revise 后结束的
+  调用图，以免改变论文预算。保存 `review_accepted`/`max_rounds_exhausted` 停止原因；字典
+  `repr` 行为仅作为 `archive-faithful` 兼容项。

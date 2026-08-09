@@ -126,6 +126,20 @@ DROP 历史入口将只含 `context` 的 evaluator 连接到要求 `question, co
 消息替代 ActionNode 的结构化注入，不增加调用。每次运行保存角色、两轮 thinking/answer、
 prompt hash 和逐请求 provider 审计信息。
 
+### 3.6 Self-Refine prompt 与调用图
+
+- GSM8K/MATH/HumanEval/MBPP：生成、review、revise user prompt 来自历史固定提交；初始生成
+  复用相应 CoT adapter。
+- HotpotQA/DROP：历史实现缺失，复用任务 CoT 生成器、通用 review 和最小 QA revise
+  adapter，标记为 `paper-faithful/inferred`。
+- 每题先生成 1 次，然后最多执行 3 轮 review；review 返回 false 时同轮追加 1 次 revise。
+  因此请求数为 2、4、6 或 7（第三轮接受为 6，第三轮拒绝并 revise 为 7）。
+- review 只接受显式 JSON boolean（兼容字符串 `"true"`/`"false"`）；解析失败不以 Python
+  字符串 truthiness 猜测。每轮保存修改前答案、feedback、判定和修改后答案。
+
+可审计 review/revise 文本位于 `prompts/baselines/self_refine/`。历史实现将 Pydantic 导出的
+整个 solution 字典格式化回后续 prompt；主协议显式使用其中的 solution 文本。
+
 ## 4. ADAS
 
 - 仓库：https://github.com/ShengranHu/ADAS

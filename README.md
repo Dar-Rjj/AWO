@@ -8,9 +8,9 @@
 - `/home/rjj/RealEvo/cfg/llm_client/openrouter.yaml`
 
 > 当前状态：阶段 0（协议/工件冻结）、阶段 1（项目脚手架）、阶段 2
->（统一 OpenRouter 客户端）和阶段 3（数据与统一 evaluator）已完成。真实 preflight
-> 已确认 `deepseek/deepseek-chat` 可用；阶段 4 正在进行，IO/CoT/CoT-SC/MedPrompt
-> 与 MultiPersona 已完成，下一步为 Self-Refine。
+>（统一 OpenRouter 客户端）、阶段 3（数据与统一 evaluator）和阶段 4（六个手工
+> baselines）已完成。真实 preflight 已确认 `deepseek/deepseek-chat` 可用；下一步为
+> AFlow 主方法。
 
 ## 1. 复现范围
 
@@ -475,6 +475,15 @@ MultiPersona 已完成受控实现。六任务统一为 3 个固定角色 × 2 �
 真实 MultiPersona–GSM8K smoke 的 7 次请求全部一次成功，共 4,329 tokens、费用
 `$0.0023651174`，综合答案 36、得分 1.0；provider 分布为
 `DeepInfra: 2, Novita: 4, StreamLake: 1`，审计记录未包含凭据。
+
+Self-Refine 已完成受控实现。每题先生成一次，然后最多运行 3 轮 review→revise，请求数随
+提前接受而变化，范围为 2–7。review_result 采用显式布尔解析，字符串 `"false"` 不会因
+Python truthiness 被误判为接受；HotpotQA/DROP adapter 标记为 inferred，每轮答案、反馈、
+修订和停止原因均进入 artifacts。
+
+真实 Self-Refine–GSM8K smoke 在首轮 review 接受，共 2 次请求、644 tokens、费用
+`$0.0002797655`，答案 36、得分 1.0；provider 分布为 `DeepInfra: 1, StreamLake: 1`，
+两次请求均一次成功且审计记录未包含凭据。
 
 ### 阶段 5：AFlow
 
