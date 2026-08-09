@@ -110,6 +110,22 @@ DROP 历史入口将只含 `context` 的 evaluator 连接到要求 `question, co
 候选，入口又传 `vote_count=2`，不能代表论文表中的 MedPrompt。本项目主协议统一 3+5，
 并将 seed、每次 permutation、显示字母、原始候选索引和计票结果写入 artifacts。
 
+### 3.5 MultiPersona prompt 与调用图
+
+- GSM8K/MATH：历史固定三个数学角色；HotpotQA：历史固定三个知识问答角色；
+  HumanEval/MBPP：历史固定三个编程角色。
+- 每个角色先独立回答一轮，第二轮读取三个角色上一轮的 thinking，再由一个 synthesis
+  调用读取第二轮的 thinking 与 answer；主协议每题固定 `3×2+1=7` 次请求。
+- DROP 历史实现缺失，复用 HotpotQA 的问答角色与 GSM8K 的通用讨论结构，标记为
+  `paper-faithful/inferred`。
+- 历史 HumanEval/MBPP 第二轮调用把 context 列表位置绑定到 `function_name`，导致实际重复
+  第一轮 prompt。主协议修复参数绑定，使 peer context 真正进入第二轮；异常路径只作为
+  `archive-faithful` 记录。
+
+历史 user prompt 保存在 `src/awo/baselines/multi_persona.py` 的冻结常量中；显式 JSON system
+消息替代 ActionNode 的结构化注入，不增加调用。每次运行保存角色、两轮 thinking/answer、
+prompt hash 和逐请求 provider 审计信息。
+
 ## 4. ADAS
 
 - 仓库：https://github.com/ShengranHu/ADAS

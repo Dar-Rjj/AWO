@@ -10,7 +10,7 @@
 > 当前状态：阶段 0（协议/工件冻结）、阶段 1（项目脚手架）、阶段 2
 >（统一 OpenRouter 客户端）和阶段 3（数据与统一 evaluator）已完成。真实 preflight
 > 已确认 `deepseek/deepseek-chat` 可用；阶段 4 正在进行，IO/CoT/CoT-SC/MedPrompt
-> 已完成，下一步为 MultiPersona。
+> 与 MultiPersona 已完成，下一步为 Self-Refine。
 
 ## 1. 复现范围
 
@@ -466,6 +466,15 @@ MedPrompt 已完成。主协议固定为 3 个独立候选 + 5 次独立乱序�
 真实 MedPrompt–GSM8K 3+5 smoke 的 8 次请求全部一次成功，共 2,347 tokens、费用
 `$0.0008207856`；五票映射为 `[2,2,1,1,1]`，候选 1 以 3 票胜出，答案 36、得分 1.0；
 provider 分布为 `DeepInfra: 4, StreamLake: 4`。
+
+MultiPersona 已完成受控实现。六任务统一为 3 个固定角色 × 2 轮讨论 + 1 次综合，每题严格
+7 次请求；第二轮显式读取三名角色第一轮 thinking。HumanEval/MBPP 历史 context 位置参数
+错绑已在主协议修复，DROP adapter 明确标记为 inferred；逐轮内容、角色和 prompt hash 全部
+进入结果 artifacts。
+
+真实 MultiPersona–GSM8K smoke 的 7 次请求全部一次成功，共 4,329 tokens、费用
+`$0.0023651174`，综合答案 36、得分 1.0；provider 分布为
+`DeepInfra: 2, Novita: 4, StreamLake: 1`，审计记录未包含凭据。
 
 ### 阶段 5：AFlow
 

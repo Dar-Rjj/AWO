@@ -158,3 +158,12 @@
 - 决策：主表六任务统一 3+5（8 次请求）；按原始索引排列而非按文本回查；排列由固定 seed
   与 sample ID 决定；五票平局取最低原始索引。任一投票格式无效则样本失败，不丢弃无效票后
   用较小分母继续。历史 MATH 2+2 和重复文本 bug 仅在 `archive-faithful` 记录。
+
+## A-020：MultiPersona 代码任务第二轮 context 丢失
+
+- 状态：`resolved-for-primary`
+- 现象：历史 HumanEval/MBPP 的第二轮调用为 `agent(problem, context, mode=...)`，但函数签名
+  第二个位置参数是 `function_name`，真正的 `context` 仍为 `None`，所以三个角色实际上重复
+  第一轮提示词；其他三个公开任务正确传入 peer context，DROP 实现缺失。
+- 决策：主表统一采用方法定义所要求的两轮讨论，把三个角色第一轮 thinking 显式传入各自
+  第二轮，仍严格保持 7 次调用；代码任务的历史错绑仅在 `archive-faithful` 模式保留。
