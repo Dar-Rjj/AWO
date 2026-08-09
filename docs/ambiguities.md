@@ -112,3 +112,16 @@
   加装未声明的 ANTLR 则额外改变 90 条记录，不能解释归档环境。
 - 决策：`source` 模式原样保留公开 evaluator；主实验 `archive` 模式只增加百分号显示值、
   裸元组空白和 `pmatrix` 空白兼容，以逐行重现官方 CSV；`corrected` 模式单独报告。
+
+## A-016：代码归档环境与单条 HumanEval 标签
+
+- 状态：`resolved-for-primary`
+- 环境差异：MBPP 最终 CSV 中 `mbpp-721` 的三份预测均使用 NumPy 且归档记 1；纯
+  `python:3.9-slim` 无 NumPy，会错误重放为 0。NLTK/SymPy 预测在归档中本来均记 0。
+- 超时差异：固定 5 秒 CPU rlimit 会错误终止归档通过的 `HumanEval/129`；该预测在
+  10 秒协议下耗时 6.79 秒通过。
+- 历史标签：`HumanEval/99` 的归档预测对冻结测试全部通过，但首份最终 CSV 记 0；未发现
+  能由公开测试解释的失败条件。
+- 决策：评测镜像仅加入 hash 锁定的 NumPy 2.0.2；CPU rlimit 与配置的墙钟超时联动；
+  `/99` 不为追平归档而人为判错，报告为 historical-label mismatch。主实验所有方法共享
+  同一镜像、harness 和超时协议。

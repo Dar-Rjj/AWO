@@ -89,7 +89,19 @@ AFlow `data/download_data.py` 在固定提交中给出三个 Google Drive 工件
 
 阶段 0 已实际下载、识别文件类型、成功列出/解包并计算哈希。大型 Google Drive 结果不能依赖简单 `curl -L`，下载器需要处理确认页面，并在解包前验证 MIME 与 SHA256。
 
-## 7. 来源优先级
+## 7. 代码评测镜像
+
+- 基础镜像：`python:3.9-slim`，固定 repo digest
+  `sha256:2d97f6910b16bd338d3060f261f53f144965f755599aab1acda1e13cf1731b1b`。
+- Python：3.9.25。
+- NumPy：2.0.2，CPython 3.9 manylinux2014 x86_64 wheel SHA256
+  `f26b258c385842546006213344c50655ff1555a9338e2e5e02a0756dc3e803dd`；同一哈希也存在于
+  `requirements.lock`。
+- 构建定义：`docker/code-sandbox/Dockerfile`；运行时无网络、无宿主挂载。
+- 本机验证 Image ID：
+  `sha256:3ac37a78e2e380ddb53b9c0ca9b672ffde319605113d97620fb92b38ff022861`。
+
+## 8. 来源优先级
 
 冲突时按以下优先级处理，并保留敏感性配置：
 

@@ -7,10 +7,9 @@
 - `/home/rjj/RealEvo/utils/llm_client/openrouter.py`
 - `/home/rjj/RealEvo/cfg/llm_client/openrouter.yaml`
 
-> 当前状态：阶段 0（协议/工件冻结）、阶段 1（项目脚手架）和阶段 2
->（统一 OpenRouter 客户端）已完成。真实 preflight 已确认
-> `deepseek/deepseek-chat` 可用；阶段 3A（工件下载、哈希校验和安全解压）已完成，
-> 阶段 3B（数据规范化与 QA/数学 evaluator）已完成，代码安全沙箱正在实现。
+> 当前状态：阶段 0（协议/工件冻结）、阶段 1（项目脚手架）、阶段 2
+>（统一 OpenRouter 客户端）和阶段 3（数据与统一 evaluator）已完成。真实 preflight
+> 已确认 `deepseek/deepseek-chat` 可用；下一步为阶段 4 手工 baselines。
 
 ## 1. 复现范围
 
@@ -291,6 +290,27 @@ HumanEval、MBPP、AFlow Programmer 和 ADAS 会执行模型生成代码。禁�
 
 安全测试通过前，不运行任何模型生成代码。
 
+当前实现使用 `docker/code-sandbox/Dockerfile`。供应链输入固定为 Python 3.9 基础镜像
+digest `sha256:2d97…b1b` 和 NumPy 2.0.2 CPython 3.9 x86_64 wheel SHA256
+`f26b…03dd`。NumPy 是六份官方最终代码 CSV 中唯一被历史通过预测实际依赖的第三方包；
+使用 NLTK/SymPy 的历史预测原本均记 0，因此不额外扩张镜像。
+
+```bash
+docker build --pull \
+  --tag awo-code-sandbox:py3.9-numpy2.0.2 \
+  docker/code-sandbox
+
+# 默认跳过真实 Docker 测试；显式启用后验证断网、只读、非 root、超时和输出上限
+AWO_RUN_DOCKER_TESTS=1 pytest -q tests/security/test_docker_sandbox.py
+python scripts/sandbox_check.py
+```
+
+运行器先核验镜像 labels，再把本地 tag 解析为不可变 Image ID。本机已验证的构建 ID 为
+`sha256:3ac37a78e2e380ddb53b9c0ca9b672ffde319605113d97620fb92b38ff022861`；
+该 ID 是本次运行 manifest 信息，不是跨平台镜像名称。每次容器均使用 `--network none`、
+只读根文件系统、UID/GID 65534、丢弃全部 capabilities、`no-new-privileges`、独立 tmpfs，
+并限制 CPU、内存、PID、文件大小、打开文件数、墙钟时间和合计输出大小。容器不挂载宿主目录。
+
 ## 10. 计划目录
 
 ```text
@@ -389,6 +409,13 @@ AWO/
 与全部原分数零差异。MATH 的 `source`、`archive`、`corrected` 三种模式及工件反推的
 窄兼容规则见 `docs/ambiguities.md` A-015。
 
+3C 已完成。代码提取、HumanEval/MBPP harness、逐样本 Docker runner 和归档 CSV replay
+已实现；46 个单元测试和 5 个真实 Docker 安全测试通过。官方 HumanEval 首份最终 CSV
+全量 131 条重评分只有 `HumanEval/99` 一条历史标签异常：当前为 124 pass / 7 fail、
+pass@1 0.946565，归档为 0.938931；修正按配置联动的 CPU rlimit 后，`HumanEval/129`
+在 6.79 秒正常通过。官方 MBPP 首份最终 CSV 全量 341 条重放为 285 pass / 56 fail、
+pass@1 0.835777，与归档逐行零差异。详见 A-016。
+
 ### 阶段 4：手工 baselines
 
 1. 依次实现 IO、CoT、CoT-SC、MedPrompt、MultiPersona 和 Self-Refine。
@@ -484,6 +511,14 @@ python scripts/download_data.py --artifact all
 
 # 重放官方 QA/数学结果（需先下载 results）
 python scripts/replay_results.py --results-dir data/results
+
+# 构建并验证代码评测镜像
+docker build --pull --tag awo-code-sandbox:py3.9-numpy2.0.2 docker/code-sandbox
+AWO_RUN_DOCKER_TESTS=1 pytest -q tests/security/test_docker_sandbox.py
+
+# 重放单份官方代码结果
+python scripts/replay_code_results.py HumanEval RESULT.csv data/raw/datasets/humaneval_test.jsonl
+python scripts/replay_code_results.py MBPP RESULT.csv data/raw/datasets/mbpp_test.jsonl
 
 # 单元、golden 和安全测试
 pytest -q
