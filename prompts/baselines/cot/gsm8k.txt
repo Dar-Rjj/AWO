@@ -1,0 +1,2 @@
+{question}
+Please reason step by step. At the end, provide the final answer in the format "Answer is <number>", where <number> is a single number, without any additional information or explanation.

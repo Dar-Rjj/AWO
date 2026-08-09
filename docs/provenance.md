@@ -64,6 +64,22 @@
 逐字检查两者一致。`adapted-schema` 表示保留历史 user prompt，但用显式 JSON system 消息
 替代 MetaGPT `ActionNode` 的 Pydantic 填充；该兼容层不产生额外 LLM 请求。
 
+### 3.2 CoT prompt
+
+| 数据集 | 历史文件 | 本项目标记 |
+| --- | --- | --- |
+| HotpotQA | `cot_hotpotqa.py` | `upstream-user/adapted-schema` |
+| DROP | `cot_drop.py`（入口/参数不兼容） | `paper-faithful/inferred` |
+| GSM8K | `cot_gsm8k.py` 的 GPT 变体 | `upstream-user/adapted-schema` |
+| MATH | `cot_math.py` | `upstream-user/adapted-schema` |
+| HumanEval | `cot_humaneval.py` | `upstream-user/adapted-schema` |
+| MBPP | `cot_mbpp.py` | `upstream-user/adapted-schema` |
+
+可审计文本位于 `prompts/baselines/cot/`。GSM8K 固定使用历史代码实际选择的
+`GSM8K_PROMPT_GPT`，而非文件中未调用的 DeepSeek 变体，以保持 Table 1 执行路径。
+DROP 历史入口将只含 `context` 的 evaluator 连接到要求 `question, context` 两个参数的 graph，
+且默认 `samples=1`；主协议未将其误标为可运行的论文实现。
+
 ## 4. ADAS
 
 - 仓库：https://github.com/ShengranHu/ADAS

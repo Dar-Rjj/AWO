@@ -1,0 +1,2 @@
+{question}
+Please provide a step-by-step explanation in text, followed by your Python function without any additional text or test cases.

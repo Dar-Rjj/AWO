@@ -1,0 +1,2 @@
+{question}
+Please provide a step-by-step explanation in text, followed by your Python function, ensure the output code is self-contained, meaning it should have the correct function name and return statement, without any additional text.

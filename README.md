@@ -9,7 +9,7 @@
 
 > 当前状态：阶段 0（协议/工件冻结）、阶段 1（项目脚手架）、阶段 2
 >（统一 OpenRouter 客户端）和阶段 3（数据与统一 evaluator）已完成。真实 preflight
-> 已确认 `deepseek/deepseek-chat` 可用；阶段 4 正在进行，IO 已完成，下一步为 CoT。
+> 已确认 `deepseek/deepseek-chat` 可用；阶段 4 正在进行，IO/CoT 已完成，下一步为 CoT-SC。
 
 ## 1. 复现范围
 
@@ -440,6 +440,13 @@ schema 兼容替代，不增加 LLM 调用。六任务均强制 `call_count=1`�
 两次最终 smoke 均为一次请求、一次成功，审计日志未包含凭据字段。单样本成功仅验证链路，
 不作为数据集效果估计；阶段 7 仍会按预注册规模执行 smoke/pilot。
 
+CoT 已完成。HotpotQA、GSM8K、MATH、HumanEval、MBPP 的历史 user prompt 已移植；
+`cot_drop.py` 的中文 prompt 与实际 evaluator 参数不兼容且入口只跑 1 条 validation，主协议
+采用英文 task adapter 并标记 `paper-faithful/inferred`。六任务均保持每题 1 次生成调用，
+不增加独立 rationale 或答案提取请求。真实 CoT–GSM8K 单样本 smoke 使用 273 tokens、费用
+`$0.00013125`，答案 36、得分 1.0；requested/actual model 均为
+`deepseek/deepseek-chat`，但 provider 为 `DeepInfra`，不同于此前 IO 的 `Novita`。
+
 ### 阶段 5：AFlow
 
 1. 移植并测试 operator。
@@ -538,6 +545,10 @@ python scripts/replay_code_results.py MBPP RESULT.csv data/raw/datasets/mbpp_tes
 # 单条 IO 真实链路 smoke
 python scripts/run_io_smoke.py gsm8k data/raw/datasets/gsm8k_validate.jsonl \
   --record-file experiments/io-gsm8k-smoke.jsonl
+
+# 单条 CoT 真实链路 smoke
+python scripts/run_cot_smoke.py gsm8k data/raw/datasets/gsm8k_validate.jsonl \
+  --record-file experiments/cot-gsm8k-smoke.jsonl
 
 # 单元、golden 和安全测试
 pytest -q

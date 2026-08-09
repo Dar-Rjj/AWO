@@ -19,6 +19,9 @@
 - 状态：`open`
 - 问题：`deepseek/deepseek-chat` 可能随时间解析到不同后端版本/provider。
 - 决策：每次请求记录请求模型、返回模型、路由 provider 和时间；preflight 结果写入 run manifest。不同实际模型不得聚合为同一次实验。
+- 2026-08-09 证据：preflight 和 IO smoke 路由到 `Novita`，随后 CoT smoke 路由到
+  `DeepInfra`；三者 requested/actual model 字段均为 `deepseek/deepseek-chat`。最终报告需列出
+  provider 分布，不能把 provider 当作固定常量。
 
 ## A-003：MATH 样本数量
 
