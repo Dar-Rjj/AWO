@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "verified_at": "2026-08-09",
+  "paper": {
+    "name": "aflow-v4.pdf",
+    "url": "https://arxiv.org/pdf/2410.10762v4",
+    "size_bytes": 1342681,
+    "sha256": "9be15f695f11dd5bc634c1c026bd2270eff3d3c4a53c4d9b51c012b7bd03d521"
+  },
+  "archives": {
+    "datasets": {
+      "google_drive_id": "1DNoegtZiUhWtvkd2xoIuElmIi4ah7k8e",
+      "filename": "aflow_data.tar.gz",
+      "size_bytes": 3263393,
+      "sha256": "7089a373c27184ae1b67e322f8276642dab246359052989b03a27f48251ae053"
+    },
+    "results": {
+      "google_drive_id": "1Sr5wjgKf3bN8OC7G6cO3ynzJqD4w6_Dv",
+      "filename": "result.tar.gz",
+      "size_bytes": 51011459,
+      "sha256": "f460f9c9218216f6fbaf553f4f215248317b7f37dd715ae146cd38199eabe5f7"
+    },
+    "initial_rounds": {
+      "google_drive_id": "1UBoW4WBWjX2gs4I_jq3ALdXeLdwDJMdP",
+      "filename": "initial_rounds.tar.gz",
+      "size_bytes": 32958,
+      "sha256": "eeb0a1ddf7b915e3405d35e5952db2b17fb86f5c01f1988e7abb4a721ef76cab"
+    }
+  },
+  "files": [
+    {"path": "drop_test.jsonl", "records": 800, "sha256": "a0ae6fac687d2bb393c9c6a43d966edf9ed24d0d157cfb7f7a4747cc8b3d9742"},
+    {"path": "drop_validate.jsonl", "records": 200, "sha256": "fa761d3f46c3c995278532ee9354fe78fd03fa6567774ea359e149dea5cf2362"},
+    {"path": "gsm8k_test.jsonl", "records": 1055, "sha256": "2b8372f7b81d842fea01efb66193152b42506e2b23c890c3d90d2aef228dd788"},
+    {"path": "gsm8k_validate.jsonl", "records": 264, "sha256": "0502dcec3263f5172e450141ff79da1f84401ed0c7e5d51016b3f773fb7ee869"},
+    {"path": "hotpotqa_test.jsonl", "records": 800, "sha256": "9b5a171af942e75d5cb7e8746dbc6639f381900467c02e8c2e27eceb77b9a8ce"},
+    {"path": "hotpotqa_validate.jsonl", "records": 200, "sha256": "a2fcafe6cb44c705b48e404ab4e9a2726874cfdecffed5ddfef06e46b6c78639"},
+    {"path": "humaneval_public_test.jsonl", "records": 159, "sha256": "ad5e3bdddfa5d0a48ad75d027d293858b2cab4526ca645a54f117c4f0b596edc"},
+    {"path": "humaneval_test.jsonl", "records": 131, "sha256": "5f7417d249b5a1153d1313c944fafe61f5bcb19717b8d952eb45e6ea5aaa23d9"},
+    {"path": "humaneval_validate.jsonl", "records": 33, "sha256": "7c09e2424572a0e82b14d2dc145bf86feb2aeef9828b8b37c7e87dfe88d902f7"},
+    {"path": "math_test.jsonl", "records": 486, "sha256": "343361223de598f1a8ca101edd5d4a063b8152a3ae80f845855b0d8cfb858e5c"},
+    {"path": "math_validate.jsonl", "records": 119, "sha256": "0ade63e8c9fe01fb8964fa22f73423be5e1c78addc9942808de464cabab188c0"},
+    {"path": "mbpp_public_test.jsonl", "records": 427, "sha256": "a3a15f074b278432b5a01227fac049670f30c0ebf8a193013bb956c1f6f04e82"},
+    {"path": "mbpp_test.jsonl", "records": 341, "sha256": "0e9485dee21c836087453255557f92457b145dce7dad22b980e007c0500a12b0"},
+    {"path": "mbpp_validate.jsonl", "records": 86, "sha256": "04c54e076bb2cb1a583d8e57110e3a644ae3125699b3309104d3b8cf95436216"},
+    {"path": "operator.json", "records": null, "sha256": "1e97392fa17dead68c50ea15549a9bbac0bd645d5885c6247c907c8570d57454"}
+  ]
+}
