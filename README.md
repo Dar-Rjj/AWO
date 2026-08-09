@@ -10,7 +10,7 @@
 > 当前状态：阶段 0（协议/工件冻结）、阶段 1（项目脚手架）和阶段 2
 >（统一 OpenRouter 客户端）已完成。真实 preflight 已确认
 > `deepseek/deepseek-chat` 可用；阶段 3A（工件下载、哈希校验和安全解压）已完成，
-> evaluator 与代码安全沙箱正在实现。
+> 阶段 3B（数据规范化与 QA/数学 evaluator）已完成，代码安全沙箱正在实现。
 
 ## 1. 复现范围
 
@@ -318,6 +318,8 @@ AWO/
 ├── scripts/
 │   ├── preflight.py
 │   ├── download_data.py
+│   ├── prepare_data.py
+│   ├── replay_results.py
 │   ├── run_table1.py
 │   ├── aggregate.py
 │   └── verify_artifacts.py
@@ -381,6 +383,11 @@ AWO/
 
 进度（2026-08-09）：3A 已完成。真实数据归档通过 SHA256/大小校验，15 个文件的
 哈希与记录数全部通过，安全解压的幂等、路径穿越和链接拒绝测试通过。
+
+3B 已完成。12 个 validation/test 文件被确定性规范化为 4,515 条统一 schema 记录；
+官方 HotpotQA、DROP、GSM8K、MATH 共 12 份最终 CSV 已逐行重评分，`archive` 模式
+与全部原分数零差异。MATH 的 `source`、`archive`、`corrected` 三种模式及工件反推的
+窄兼容规则见 `docs/ambiguities.md` A-015。
 
 ### 阶段 4：手工 baselines
 
@@ -470,9 +477,13 @@ python scripts/preflight.py --config configs/models/openrouter_deepseek_chat.yam
 # 下载并校验数据/工件
 python scripts/download_data.py
 python scripts/verify_artifacts.py
+python scripts/prepare_data.py
 
 # 如需同时下载论文结果和初始 workflow（默认只下载 datasets）
 python scripts/download_data.py --artifact all
+
+# 重放官方 QA/数学结果（需先下载 results）
+python scripts/replay_results.py --results-dir data/results
 
 # 单元、golden 和安全测试
 pytest -q

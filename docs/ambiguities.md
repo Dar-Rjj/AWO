@@ -102,3 +102,13 @@
 - 状态：`resolved-for-primary`
 - 上游 AFlow/ADAS 会执行模型生成代码。
 - 决策：禁止宿主进程直接 `exec`；所有代码任务和生成程序在无网络、非 root、受资源限制的独立沙箱运行。
+
+## A-015：MATH 归档分数与公开 evaluator
+
+- 状态：`resolved-for-primary`
+- 现象：公开源码及其已声明依赖可重放绝大多数 MATH 行，但三份最终 CSV 仍有
+  4/1/1 条记录不一致；差异仅涉及转义百分号和元组/矩阵内部空白。
+- 证据：这些记录在官方 CSV 中均记 1；按公开源码的 `parse_expr` 回退会记 0；
+  加装未声明的 ANTLR 则额外改变 90 条记录，不能解释归档环境。
+- 决策：`source` 模式原样保留公开 evaluator；主实验 `archive` 模式只增加百分号显示值、
+  裸元组空白和 `pmatrix` 空白兼容，以逐行重现官方 CSV；`corrected` 模式单独报告。
