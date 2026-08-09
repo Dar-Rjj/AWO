@@ -7,8 +7,9 @@
 - `/home/rjj/RealEvo/utils/llm_client/openrouter.py`
 - `/home/rjj/RealEvo/cfg/llm_client/openrouter.yaml`
 
-> 当前状态：阶段 0（协议/工件冻结）和阶段 1（项目脚手架）已完成。配置检查、
-> manifest、lint、测试和包构建可运行；OpenRouter 客户端及后续实验命令将在下一阶段实现。
+> 当前状态：阶段 0（协议/工件冻结）、阶段 1（项目脚手架）和阶段 2
+>（统一 OpenRouter 客户端）已完成。真实 preflight 已确认
+> `deepseek/deepseek-chat` 可用；下一阶段实现数据处理、evaluator 和代码安全沙箱。
 
 ## 1. 复现范围
 
@@ -361,6 +362,11 @@ AWO/
 4. 将 optimizer、executor 和 baselines 注入同一个 client factory。
 
 验收：所有角色的请求日志均显示 `deepseek/deepseek-chat`，且失败不会无限重试。
+
+完成记录（2026-08-09）：离线检查、15 项单元测试、lint 和 Python 3.9 编译通过；
+一次最小真实请求由 OpenRouter 路由至 `deepseek/deepseek-chat`（provider `Novita`），
+共 27 tokens、一次成功，审计日志中未出现 API key。provider 属于运行时信息，后续每次
+实验仍以请求日志中的实际返回值为准。
 
 ### 阶段 3：数据与 evaluator
 
