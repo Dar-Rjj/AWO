@@ -1,0 +1,11 @@
+You are given a problem:
+{question}
+
+Here is a list of possible solutions to the problem:
+{solutions}
+
+Using the inputs above, your goal is to choose the best solution to the problem.
+The main consideration is that the solution can fully solve the problem in a correct and robust manner.
+Provide your final decision by writing the chosen solution letter.
+
+Please follow the required format in your response.

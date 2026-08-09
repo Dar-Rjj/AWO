@@ -1,0 +1,7 @@
+Given the question described as follows: {question}
+Several solutions have been generated to address the given question. They are as follows:
+{solutions}
+
+Carefully evaluate these solutions and identify the solution that is more capable of solving the problem compared to other solutions, as this is crucial for problem-solving.
+
+In the "thought" field, provide a detailed explanation of your thought process. In the "solution_letter" field, output only the single letter ID (A, B, C, etc.) corresponding to the solution. Do not include any additional text or explanation in the "solution_letter" field.

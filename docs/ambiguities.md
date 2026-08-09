@@ -148,3 +148,13 @@
 - 决策：主表按方法语义和公平预算统一为 5 个单调用 CoT 候选 + 1 selector（6 次）；
   HotpotQA 11 次只在 `archive-faithful` 模式保留。所有候选即使答案重复也必须真实独立请求，
   selector 解析失败记为该样本失败，不用 A 作为隐式默认值。
+
+## A-019：MedPrompt 的 MATH 预算与重复候选映射
+
+- 状态：`resolved-for-primary`
+- 现象：论文/公开主结构为 3 候选 + 5 投票，但历史 MATH 入口执行 2 候选 + 2 投票；
+  HotpotQA/DROP 缺失。历史 shuffle 又以 `solutions.index(solution)` 回查原始索引，候选文本
+  重复时会全部映射到首次出现的位置。
+- 决策：主表六任务统一 3+5（8 次请求）；按原始索引排列而非按文本回查；排列由固定 seed
+  与 sample ID 决定；五票平局取最低原始索引。任一投票格式无效则样本失败，不丢弃无效票后
+  用较小分母继续。历史 MATH 2+2 和重复文本 bug 仅在 `archive-faithful` 记录。

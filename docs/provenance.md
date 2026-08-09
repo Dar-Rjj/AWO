@@ -95,6 +95,21 @@ DROP 历史入口将只含 `context` 的 evaluator 连接到要求 `question, co
 为避免数据集间方法预算不同，Table 1 主复现统一为 6 次，11 次行为只归入
 `archive-faithful`。
 
+### 3.4 MedPrompt prompt 与调用图
+
+- GSM8K 候选 prompt 和通用 voter：`medprompt_gsm8k.py`。
+- MATH 候选 prompt 和通用 voter：`medprompt_math.py`。
+- HumanEval/MBPP 候选 prompt 和 code voter：`medprompt_humaneval.py`、
+  `medpromt_mbpp.py`（上游文件名原有拼写错误）。
+- HotpotQA/DROP：固定 commit 无实现，候选沿用对应 CoT adapter，voter 为
+  `paper-faithful/inferred`。
+- 可审计新增文本：`prompts/baselines/medprompt/`；复用的候选文本仍位于
+  `prompts/baselines/cot/`。
+
+论文/其余公开入口的主结构是 3 个候选 + 5 次乱序投票。历史 MATH `__call__` 仅生成 2 个
+候选，入口又传 `vote_count=2`，不能代表论文表中的 MedPrompt。本项目主协议统一 3+5，
+并将 seed、每次 permutation、显示字母、原始候选索引和计票结果写入 artifacts。
+
 ## 4. ADAS
 
 - 仓库：https://github.com/ShengranHu/ADAS

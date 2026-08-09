@@ -9,8 +9,8 @@
 
 > 当前状态：阶段 0（协议/工件冻结）、阶段 1（项目脚手架）、阶段 2
 >（统一 OpenRouter 客户端）和阶段 3（数据与统一 evaluator）已完成。真实 preflight
-> 已确认 `deepseek/deepseek-chat` 可用；阶段 4 正在进行，IO/CoT/CoT-SC 已完成，
-> 下一步为 MedPrompt。
+> 已确认 `deepseek/deepseek-chat` 可用；阶段 4 正在进行，IO/CoT/CoT-SC/MedPrompt
+> 已完成，下一步为 MultiPersona。
 
 ## 1. 复现范围
 
@@ -458,6 +458,15 @@ CoT-SC 已完成。主协议固定为 5 个独立 CoT 候选 + 1 个 LLM selecto
 `DeepInfra: 4, Novita: 2`，因此 run manifest 必须按请求记录 provider，而不能只在 run
 级别记录一个值。
 
+MedPrompt 已完成。主协议固定为 3 个独立候选 + 5 次独立乱序投票，每题严格 8 次请求；
+每次排列由 `seed + sample_id` 确定并记录，票的 A/B/C 显式映射回原始候选索引，五票平局
+固定选择最低原始索引。任一票无法解析则样本 fail-closed，不静默减少投票分母。历史 MATH
+入口实际为 2 候选 + 2 投票，HotpotQA/DROP 缺失；这些不一致不进入 3+5 主表。
+
+真实 MedPrompt–GSM8K 3+5 smoke 的 8 次请求全部一次成功，共 2,347 tokens、费用
+`$0.0008207856`；五票映射为 `[2,2,1,1,1]`，候选 1 以 3 票胜出，答案 36、得分 1.0；
+provider 分布为 `DeepInfra: 4, StreamLake: 4`。
+
 ### 阶段 5：AFlow
 
 1. 移植并测试 operator。
@@ -564,6 +573,10 @@ python scripts/run_cot_smoke.py gsm8k data/raw/datasets/gsm8k_validate.jsonl \
 # 单条 CoT-SC 5+1 真实链路 smoke
 python scripts/run_cot_sc_smoke.py gsm8k data/raw/datasets/gsm8k_validate.jsonl \
   --record-file experiments/cot-sc-gsm8k-smoke.jsonl
+
+# 单条 MedPrompt 3+5 真实链路 smoke
+python scripts/run_medprompt_smoke.py gsm8k data/raw/datasets/gsm8k_validate.jsonl \
+  --seed 0 --record-file experiments/medprompt-gsm8k-smoke.jsonl
 
 # 单元、golden 和安全测试
 pytest -q
