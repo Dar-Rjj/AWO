@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from awo.llm import ChatResult
@@ -17,6 +17,7 @@ class BaselineResult:
     prompt_sha256: str
     responses: tuple[ChatResult, ...]
     protocol: str = "paper-faithful"
+    artifacts: dict[str, Any] = field(default_factory=dict)
 
     @property
     def call_count(self) -> int:
@@ -31,5 +32,6 @@ class BaselineResult:
             "prompt_sha256": self.prompt_sha256,
             "protocol": self.protocol,
             "call_count": self.call_count,
+            "artifacts": self.artifacts,
             "responses": [response.model_dump(mode="json") for response in self.responses],
         }

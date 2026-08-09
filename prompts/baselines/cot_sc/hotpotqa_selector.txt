@@ -1,0 +1,7 @@
+Given the question descripted as follows: {question}
+And the relevant context is provided as follows: {context}
+some solutions to the question are generated as follows:
+{solutions}
+
+Evaluate these solutions and select the most consistent solution based on majority consensus.
+Give your answer with a single id of solution (without anything else).

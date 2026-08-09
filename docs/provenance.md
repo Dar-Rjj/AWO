@@ -80,6 +80,21 @@
 DROP 历史入口将只含 `context` 的 evaluator 连接到要求 `question, context` 两个参数的 graph，
 且默认 `samples=1`；主协议未将其误标为可运行的论文实现。
 
+### 3.3 CoT-SC prompt 与调用图
+
+- 候选 prompt：复用 3.2 的 CoT prompt；固定生成 5 个候选。
+- 通用 selector：固定 commit 的 `self_consistency_gsm8k.py`，同文案也用于 MATH、
+  HumanEval、MBPP。
+- HotpotQA selector：`self_consistency_hotpotqa.py` 的 question+context 变体。
+- DROP：固定 commit 无 self-consistency 文件，候选与 selector 均为
+  `paper-faithful/inferred`。
+- 可审计 selector 文本：`prompts/baselines/cot_sc/`。
+
+主协议使用 5 次候选生成 + 1 次 selector。历史 HotpotQA 候选生成器内部先生成 thought、
+再把 thought 回填后生成答案，因此历史调用图为 `5×2+1=11`；其他四个公开任务为 6 次。
+为避免数据集间方法预算不同，Table 1 主复现统一为 6 次，11 次行为只归入
+`archive-faithful`。
+
 ## 4. ADAS
 
 - 仓库：https://github.com/ShengranHu/ADAS

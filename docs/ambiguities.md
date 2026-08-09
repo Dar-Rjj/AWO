@@ -22,6 +22,8 @@
 - 2026-08-09 证据：preflight 和 IO smoke 路由到 `Novita`，随后 CoT smoke 路由到
   `DeepInfra`；三者 requested/actual model 字段均为 `deepseek/deepseek-chat`。最终报告需列出
   provider 分布，不能把 provider 当作固定常量。
+- CoT-SC 单题证据：6 次请求内部已同时出现 `DeepInfra` 4 次和 `Novita` 2 次；run-level
+  单个 provider 字段不足以表达实际路由，必须从 request log 聚合分布。
 
 ## A-003：MATH 样本数量
 
@@ -137,3 +139,12 @@
 - 决策：保留历史 user prompt，使用显式 system 消息要求等价的单字段 JSON；HumanEval/MBPP
   字段为完整 Python 程序。解析失败时保留原始响应并走确定性 fallback，不追加修复调用。
   该实现标记 `upstream-user/adapted-schema`，调用预算仍为 IO 每题 1 次。
+
+## A-018：CoT-SC 的跨任务调用预算
+
+- 状态：`resolved-for-primary`
+- 现象：GSM8K/MATH/HumanEval/MBPP 历史实现为 5 个单调用候选 + 1 selector；HotpotQA
+  的每个候选内部调用两次，实际为 11 次；DROP 实现缺失。
+- 决策：主表按方法语义和公平预算统一为 5 个单调用 CoT 候选 + 1 selector（6 次）；
+  HotpotQA 11 次只在 `archive-faithful` 模式保留。所有候选即使答案重复也必须真实独立请求，
+  selector 解析失败记为该样本失败，不用 A 作为隐式默认值。
