@@ -9,7 +9,8 @@
 
 > 当前状态：阶段 0（协议/工件冻结）、阶段 1（项目脚手架）和阶段 2
 >（统一 OpenRouter 客户端）已完成。真实 preflight 已确认
-> `deepseek/deepseek-chat` 可用；下一阶段实现数据处理、evaluator 和代码安全沙箱。
+> `deepseek/deepseek-chat` 可用；阶段 3A（工件下载、哈希校验和安全解压）已完成，
+> evaluator 与代码安全沙箱正在实现。
 
 ## 1. 复现范围
 
@@ -378,6 +379,9 @@ AWO/
 
 验收：官方归档结果可被重新评分，沙箱安全测试全部通过。
 
+进度（2026-08-09）：3A 已完成。真实数据归档通过 SHA256/大小校验，15 个文件的
+哈希与记录数全部通过，安全解压的幂等、路径穿越和链接拒绝测试通过。
+
 ### 阶段 4：手工 baselines
 
 1. 依次实现 IO、CoT、CoT-SC、MedPrompt、MultiPersona 和 Self-Refine。
@@ -466,6 +470,9 @@ python scripts/preflight.py --config configs/models/openrouter_deepseek_chat.yam
 # 下载并校验数据/工件
 python scripts/download_data.py
 python scripts/verify_artifacts.py
+
+# 如需同时下载论文结果和初始 workflow（默认只下载 datasets）
+python scripts/download_data.py --artifact all
 
 # 单元、golden 和安全测试
 pytest -q
