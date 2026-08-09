@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+
+# Environments and secrets
+.venv/
+.env
+.env.*
+!.env.example
+
+# Editors and OS
+.idea/
+.vscode/
+.DS_Store
+
+# Downloaded/generated experiment data
+data/raw/
+data/processed/
+data/results/
+data/workspace/
+experiments/runs/
+reports/generated/
+
+# Temporary files
+*.log
+*.tmp
+*.part

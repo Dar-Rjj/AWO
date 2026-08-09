@@ -1,0 +1,20 @@
+schema_version: 1
+name: aflow-table1-deepseek-chat
+model_config: ../models/openrouter_deepseek_chat.yaml
+seed: 42
+test_repeats: 3
+datasets: [hotpotqa, drop, humaneval, mbpp, gsm8k, math]
+methods: [io, cot, cot_sc, medprompt, multipersona, self_refine, adas, aflow]
+aflow:
+  max_rounds: 20
+  validation_rounds: 5
+  top_k: 3
+  early_stop_rounds: 5
+  alpha: 0.4
+  lambda: 0.2
+adas:
+  max_rounds: 30
+execution:
+  cache_scope: run
+  reuse_cache_across_repeats: false
+  failures_score_zero: true

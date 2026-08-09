@@ -1,0 +1,9 @@
+schema_version: 1
+provider: openrouter
+model: deepseek/deepseek-chat
+base_url: https://openrouter.ai/api/v1
+temperature: 1.0
+n: 1
+timeout_seconds: 120
+max_retries: 8
+max_concurrency: 8

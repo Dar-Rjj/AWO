@@ -1,0 +1,21 @@
+schema_version: 1
+name: aflow-table1-smoke
+model_config: models/openrouter_deepseek_chat.yaml
+seed: 42
+test_repeats: 1
+sample_limit: 3
+datasets: [hotpotqa, drop, humaneval, mbpp, gsm8k, math]
+methods: [io, cot_sc, adas, aflow]
+aflow:
+  max_rounds: 1
+  validation_rounds: 1
+  top_k: 1
+  early_stop_rounds: 1
+  alpha: 0.4
+  lambda: 0.2
+adas:
+  max_rounds: 1
+execution:
+  cache_scope: run
+  reuse_cache_across_repeats: false
+  failures_score_zero: true

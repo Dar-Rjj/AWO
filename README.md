@@ -7,7 +7,8 @@
 - `/home/rjj/RealEvo/utils/llm_client/openrouter.py`
 - `/home/rjj/RealEvo/cfg/llm_client/openrouter.yaml`
 
-> 当前状态：仓库尚处于复现规格设计阶段。本文档中的目录和命令是实现目标；在对应阶段完成前，不应假定所有命令已经可运行。
+> 当前状态：阶段 0（协议/工件冻结）和阶段 1（项目脚手架）已完成。配置检查、
+> manifest、lint、测试和包构建可运行；OpenRouter 客户端及后续实验命令将在下一阶段实现。
 
 ## 1. 复现范围
 
@@ -449,7 +450,9 @@ cd /home/rjj/AWO
 # 安装
 conda create -n awo python=3.9 -y
 conda activate awo
-pip install -e .
+python -m pip install pip==25.2
+python -m pip install --require-hashes -r requirements.lock
+python -m pip install --no-deps -e .
 
 # 模型和环境预检
 python scripts/preflight.py --config configs/models/openrouter_deepseek_chat.yaml
