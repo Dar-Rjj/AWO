@@ -1,0 +1,2 @@
+{question}
+Please generate a solution for the problem. At the end, provide the final answer in the format "\boxed{{<number>}}", where <number> is a math answer(an expression or number), without any additional information or explanation.

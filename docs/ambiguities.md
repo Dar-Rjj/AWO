@@ -125,3 +125,12 @@
 - 决策：评测镜像仅加入 hash 锁定的 NumPy 2.0.2；CPU rlimit 与配置的墙钟超时联动；
   `/99` 不为追平归档而人为判错，报告为 historical-label mismatch。主实验所有方法共享
   同一镜像、harness 和超时协议。
+
+## A-017：历史 ActionNode 结构化填充
+
+- 状态：`resolved-for-primary`
+- 问题：历史 baseline 文件公开了 user prompt 和 Pydantic 输出字段，但实际格式指令由
+  MetaGPT `ActionNode`/`code_fill` 注入；直接移植整个旧框架会同时带入模型、重试和成本逻辑。
+- 决策：保留历史 user prompt，使用显式 system 消息要求等价的单字段 JSON；HumanEval/MBPP
+  字段为完整 Python 程序。解析失败时保留原始响应并走确定性 fallback，不追加修复调用。
+  该实现标记 `upstream-user/adapted-schema`，调用预算仍为 IO 每题 1 次。

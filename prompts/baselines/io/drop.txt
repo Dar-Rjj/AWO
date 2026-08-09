@@ -1,0 +1,2 @@
+Given the passage and question below, provide the final answer concisely. The answer must be a direct response without explanation.
+{question}

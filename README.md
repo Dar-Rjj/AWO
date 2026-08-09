@@ -9,7 +9,7 @@
 
 > 当前状态：阶段 0（协议/工件冻结）、阶段 1（项目脚手架）、阶段 2
 >（统一 OpenRouter 客户端）和阶段 3（数据与统一 evaluator）已完成。真实 preflight
-> 已确认 `deepseek/deepseek-chat` 可用；下一步为阶段 4 手工 baselines。
+> 已确认 `deepseek/deepseek-chat` 可用；阶段 4 正在进行，IO 已完成，下一步为 CoT。
 
 ## 1. 复现范围
 
@@ -425,6 +425,21 @@ pass@1 0.835777，与归档逐行零差异。详见 A-016。
 
 验收：每个 baseline 可在每个数据集的 2 个样本上完整运行，并满足预期调用预算。
 
+进度（2026-08-09）：IO 已完成。固定 commit 中存在的 HotpotQA、GSM8K、MATH、
+HumanEval、MBPP user prompt 已按原文移植；缺失的 DROP prompt 标记为
+`paper-faithful/inferred`。原 MetaGPT `ActionNode` 的结构化填充由显式单字段 JSON system
+schema 兼容替代，不增加 LLM 调用。六任务均强制 `call_count=1`，prompt 文本与运行时模板
+有一致性测试。
+
+真实单样本 smoke 均由 OpenRouter 路由至 `deepseek/deepseek-chat`（provider `Novita`）：
+
+- IO–GSM8K：251 tokens，费用 `$0.0001634`，答案 36，得分 1.0；
+- IO–HumanEval（最终上游 user prompt）：206 tokens，费用 `$0.0001364`，生成代码在固定
+  Docker Image ID 中通过官方测试，得分 1.0。
+
+两次最终 smoke 均为一次请求、一次成功，审计日志未包含凭据字段。单样本成功仅验证链路，
+不作为数据集效果估计；阶段 7 仍会按预注册规模执行 smoke/pilot。
+
 ### 阶段 5：AFlow
 
 1. 移植并测试 operator。
@@ -519,6 +534,10 @@ AWO_RUN_DOCKER_TESTS=1 pytest -q tests/security/test_docker_sandbox.py
 # 重放单份官方代码结果
 python scripts/replay_code_results.py HumanEval RESULT.csv data/raw/datasets/humaneval_test.jsonl
 python scripts/replay_code_results.py MBPP RESULT.csv data/raw/datasets/mbpp_test.jsonl
+
+# 单条 IO 真实链路 smoke
+python scripts/run_io_smoke.py gsm8k data/raw/datasets/gsm8k_validate.jsonl \
+  --record-file experiments/io-gsm8k-smoke.jsonl
 
 # 单元、golden 和安全测试
 pytest -q

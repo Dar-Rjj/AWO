@@ -47,6 +47,23 @@
 
 `cot_drop.py` 虽存在，但为明显的临时/异常配置，不能直接视为 Table 1 完整实现。缺失组合的 task adapter 和 prompt 必须在来源文档中标记为 inferred。
 
+### 3.1 IO prompt
+
+固定 commit 中的 IO user prompt 来源：
+
+| 数据集 | 历史文件 | 本项目标记 |
+| --- | --- | --- |
+| HotpotQA | `io_hotpotqa.py` | `upstream-user/adapted-schema` |
+| DROP | 无 | `paper-faithful/inferred` |
+| GSM8K | `io_gsm8k.py` | `upstream-user/adapted-schema` |
+| MATH | `io_math.py` | `upstream-user/adapted-schema` |
+| HumanEval | `io_humaneval.py` | `upstream-user/adapted-schema` |
+| MBPP | `io_mbpp.py` | `upstream-user/adapted-schema` |
+
+可审计文本位于 `prompts/baselines/io/`，运行时模板位于 `src/awo/baselines/io.py`，测试会
+逐字检查两者一致。`adapted-schema` 表示保留历史 user prompt，但用显式 JSON system 消息
+替代 MetaGPT `ActionNode` 的 Pydantic 填充；该兼容层不产生额外 LLM 请求。
+
 ## 4. ADAS
 
 - 仓库：https://github.com/ShengranHu/ADAS

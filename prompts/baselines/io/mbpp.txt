@@ -1,0 +1,2 @@
+{question}
+Generate an answer to this question, ensure the output code is self-contained, meaning it should have the correct function name and return statement, but without any additional test cases.

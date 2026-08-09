@@ -1,0 +1,5 @@
+Given a question and a context, please answer the question.
+1. In the "thought" field, explain your thinking process.
+2. In the "answer" field, provide the final answer concisely and clearly. The answer should be a direct response to the question, without including explanations or reasoning.
+Question: {question}
+The revelant context: {context}
