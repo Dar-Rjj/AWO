@@ -540,6 +540,18 @@ python scripts/run_search.py \
 配置未设 limit，使用完整 validation split。CLI 的 `--limit` 只用于显式覆盖并进入 run
 fingerprint。AFlow 的 HumanEval/MBPP 搜索还必须传相应 `--public-tests` 文件。
 
+真实 GSM8K AFlow search→freeze→test smoke 已在 commit
+`bd2749031be554dfa8a9d74b36aad9bf7ba852ea` 上完成。搜索使用 3 条 validation、1 次
+validation repeat 和 1 个生成 round：初始单节点 workflow 得分 1.0；optimizer 一次生成
+“增加验证步骤”的候选，该候选也为 1.0，未严格提升，因此按 smoke 配置早停并冻结初始
+workflow。搜索共 10 次请求（9 executor + 1 optimizer）、6,628 tokens、费用
+`$0.0056940476`，provider 为 Novita 6、StreamLake 4。
+
+冻结 candidate 随后在首条 GSM8K test 上执行 1 次请求、503 tokens、`$0.000481185`，得分
+1.0，provider 为 StreamLake。完整 search→test 为 11 次请求、7,131 tokens、
+`$0.0061752326`；requested/actual model 均为 `deepseek/deepseek-chat`，所有请求一次成功。
+重复执行两条命令后审计行数仍为 10+1，证明搜索 round 与 test sample 都没有重复调用。
+
 单次真实 optimizer 候选生成 smoke：
 
 ```bash
