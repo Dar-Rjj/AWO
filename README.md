@@ -613,6 +613,25 @@ python scripts/run_manual_experiment.py \
 同一命令和输出目录再次运行不会产生重复请求。正式 3 次重复使用不同 repeat key，且不跨
 repeat 复用响应缓存。
 
+六数据集 IO 基础 smoke 已在实现 commit
+`3f018044b173b7d937288547bc8a7079808c47d7` 上完成。每个 test split 取首条样本，共 6 条：
+
+| 数据集 | 样本 | 分数 |
+| --- | --- | ---: |
+| HotpotQA | `5ab430fa5542991751b4d6dd` | 0.8571 F1 |
+| DROP | `3481` | 1.0 F1 |
+| HumanEval | `HumanEval/84` | 1.0 pass@1 |
+| MBPP | `mbpp-116` | 1.0 pass@1 |
+| GSM8K | `gsm8k-test-598` | 0.0 |
+| MATH | `math-test-0000` | 0.0 |
+
+6 次请求全部成功且均一次完成，共 2,485 tokens、费用 `$0.0010732172`；requested/actual
+model 均为 `deepseek/deepseek-chat`，provider 分布为 Novita 3 次、StreamLake 3 次。
+HumanEval 和 MBPP 均通过 Docker 沙箱执行测试。用完全相同的参数再次运行后，各目录
+`requests.jsonl` 总行数仍为 6，证明未重复调用。记录位于
+`experiments/runs/io-smoke-<dataset>/`（实验产物默认不纳入 Git）。该 1-shot 结果只用于验证
+基础设施，不能用于方法效果比较。
+
 ### 阶段 8：完整 Table 1
 
 1. 锁定代码 commit、配置和数据 manifest。
