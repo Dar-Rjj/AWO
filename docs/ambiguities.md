@@ -176,3 +176,12 @@
 - 决策：主协议向 review/revise 显式传递 solution 文本；保持最多三轮和末轮 revise 后结束的
   调用图，以免改变论文预算。保存 `review_accepted`/`max_rounds_exhausted` 停止原因；字典
   `repr` 行为仅作为 `archive-faithful` 兼容项。
+
+## A-022：AFlow 生成代码的宿主执行与 formatter 参数丢失
+
+- 状态：`resolved-for-primary`
+- 现象：论文同期 `Programmer`、`Test` 直接在宿主进程/进程池 `exec` 模型代码；其
+  `CustomCodeGenerate._fill_node(..., function_name=...)` 又未把 function_name 传入
+  `CodeFormatter`，entry point 约束实际丢失。
+- 决策：保持 operator 名称、异步接口、prompt 和返回字段，但所有生成代码仅在锁定 Docker
+  沙箱执行；代码生成提示词显式包含 entry point。安全修复不可在 `archive-faithful` 中关闭。

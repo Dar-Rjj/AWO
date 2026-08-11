@@ -194,6 +194,17 @@ AFlow `data/download_data.py` 在固定提交中给出三个 Google Drive 工件
 - 本机验证 Image ID：
   `sha256:3ac37a78e2e380ddb53b9c0ca9b672ffde319605113d97620fb92b38ff022861`。
 
+## 7.1 AFlow operator runtime
+
+论文同期 AFlow commit 的六任务模板需要 `Custom`、`AnswerGenerate`、`CustomCodeGenerate`、
+`ScEnsemble`、`Programmer` 和 `Test`。本项目保留其异步调用接口、返回字段和 user prompt，
+但所有 LLM 请求经统一审计客户端；原 XML formatter 以等价显式 JSON system schema 替代。
+
+上游 `Programmer`、`Test` 使用宿主 `exec`/进程池执行生成代码。本项目禁止该路径：两者仅能
+在提供已验证 `DockerSandbox` 时构造，代码在无网络、只读、非 root、资源受限容器执行。
+`CustomCodeGenerate` 显式加入 entry point 约束，修复上游 formatter 未消费 function_name
+参数的问题。上述变化属于安全/格式兼容层，不改变 workflow 的 LLM operator 拓扑。
+
 ## 8. 来源优先级
 
 冲突时按以下优先级处理，并保留敏感性配置：

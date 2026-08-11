@@ -10,7 +10,7 @@
 > 当前状态：阶段 0（协议/工件冻结）、阶段 1（项目脚手架）、阶段 2
 >（统一 OpenRouter 客户端）、阶段 3（数据与统一 evaluator）和阶段 4（六个手工
 > baselines）已完成。真实 preflight 已确认 `deepseek/deepseek-chat` 可用；下一步为
-> AFlow 主方法。
+> AFlow 主方法；operator/runtime 已完成，下一步为历史 workflow 兼容与重放。
 
 ## 1. 复现范围
 
@@ -492,6 +492,14 @@ Python truthiness 被误判为接受；HotpotQA/DROP adapter 标记为 inferred�
 3. 重放官方最佳 workflow 和轨迹。
 4. 实现 20 轮搜索、候选选择、经验树和早停。
 5. 运行 alpha/lambda 敏感性配置。
+
+当前已完成第一子步骤：六任务所需的 6 类 operator 及统一异步 runtime 已移植。所有 LLM
+调用进入 OpenRouter 审计与成本账本；`Programmer`/`Test` 强制使用锁定的 Docker 沙箱，
+不再执行上游宿主 `exec`；代码 entry point 丢失问题已修复并记录为 A-022。
+
+真实 AFlow blank workflow–GSM8K smoke 使用 `Custom` 单次调用，共 312 tokens、费用
+`$0.00021213`，答案 36、得分 1.0；provider 为 `DeepInfra`，请求一次成功且审计记录未
+包含凭据。
 
 验收：可从初始模板生成、评估、选择并持久化新 workflow；测试数据不进入搜索。
 
