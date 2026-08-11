@@ -200,11 +200,24 @@ class SearchStore:
         temporary.replace(path)
 
     @staticmethod
-    def _config_payload(dataset: str, config: SearchConfig) -> dict[str, Any]:
-        return {"dataset": dataset, "search": asdict(config)}
+    def _config_payload(
+        dataset: str,
+        config: SearchConfig,
+        run_fingerprint: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        return {
+            "dataset": dataset,
+            "search": asdict(config),
+            "run_fingerprint": dict(run_fingerprint),
+        }
 
-    def initialize(self, dataset: str, config: SearchConfig) -> None:
-        payload = self._config_payload(dataset, config)
+    def initialize(
+        self,
+        dataset: str,
+        config: SearchConfig,
+        run_fingerprint: Mapping[str, Any],
+    ) -> None:
+        payload = self._config_payload(dataset, config, run_fingerprint)
         encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
         config_hash = hashlib.sha256(encoded).hexdigest()
         config_file = self.root / "config.json"
@@ -310,12 +323,14 @@ class AFlowSearch:
         generator: CandidateGenerator,
         evaluator: Evaluator,
         output_dir: Path,
+        run_fingerprint: Mapping[str, Any] | None = None,
     ) -> None:
         self.dataset = normalize_dataset(dataset)
         self.config = config
         self.generator = generator
         self.evaluator = evaluator
         self.store = SearchStore(output_dir)
+        self.run_fingerprint = dict(run_fingerprint or {})
 
     async def _evaluate(
         self,
@@ -391,7 +406,7 @@ class AFlowSearch:
         return record
 
     async def run(self) -> SearchSummary:
-        self.store.initialize(self.dataset, self.config)
+        self.store.initialize(self.dataset, self.config, self.run_fingerprint)
         candidates, records = self.store.load()
         if any(len(record.scores) != self.config.validation_repeats for record in records):
             raise ValueError("stored validation repeat count does not match search config")

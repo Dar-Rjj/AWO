@@ -521,7 +521,8 @@ token/费用计入 observation。
 搜索候选使用 `declarative_v1` JSON DSL：最多 10 个节点，只接受六任务各自在论文代码中
 注册的 operator 与向后引用，不执行 optimizer 生成的 Python。graph/prompt 内容用于重复
 检测；候选、5 次逐轮观察、父选择概率、token/费用和状态均原子持久化。相同输出目录只能在
-搜索配置哈希一致时恢复，已完成 round 不会重复调用。
+搜索配置及 run fingerprint 一致时恢复；fingerprint 冻结数据 SHA256、validation sample
+ids、完整模型配置 SHA256 和实现 commit，已完成 round 不会重复调用。
 
 单次真实 optimizer 候选生成 smoke：
 
@@ -559,7 +560,8 @@ MBPP 的最终模型代码只交给与其他方法相同的锁定 Docker evaluat
 搜索 evaluator 在构造时拒绝任何 test split；validation 样本级失败记 0。独立 call ledger
 在 agent 字段解析失败时仍保留此前成功请求的 token/费用。每个 archive 条目
 保存候选/架构双 SHA256、fitness、生成与执行 token/费用、错误和代数，配置哈希不一致时
-禁止恢复。最终最佳 agent 冻结后才能进入 3 次独立 test run。
+禁止恢复；run fingerprint 还锁定数据、validation slice、模型配置和实现 commit。最终最佳
+agent 冻结后才能进入 3 次独立 test run。
 
 真实 GSM8K meta smoke 的首个完整 run 为 3 次请求（proposal、reflection 1、reflection 2），
 共 14,638 tokens、费用 `$0.00621582`，provider 为 `DeepInfra: 2, Novita: 1`；三次均

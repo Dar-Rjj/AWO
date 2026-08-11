@@ -124,8 +124,17 @@ class ADASStore:
         )
         temporary.replace(path)
 
-    def initialize(self, dataset: str, config: ADASConfig) -> None:
-        payload = {"dataset": dataset, "search": asdict(config)}
+    def initialize(
+        self,
+        dataset: str,
+        config: ADASConfig,
+        run_fingerprint: Mapping[str, Any],
+    ) -> None:
+        payload = {
+            "dataset": dataset,
+            "search": asdict(config),
+            "run_fingerprint": dict(run_fingerprint),
+        }
         digest = hashlib.sha256(
             json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
         ).hexdigest()
@@ -191,6 +200,7 @@ class ADASSearch:
         generator: MetaGenerator,
         evaluator: ADASEvaluator,
         output_dir: Path,
+        run_fingerprint: Mapping[str, Any] | None = None,
     ) -> None:
         if dataset not in {"hotpotqa", "drop", "humaneval", "mbpp", "gsm8k", "math"}:
             raise ValueError(f"unsupported ADAS dataset: {dataset}")
@@ -199,6 +209,7 @@ class ADASSearch:
         self.generator = generator
         self.evaluator = evaluator
         self.store = ADASStore(output_dir)
+        self.run_fingerprint = dict(run_fingerprint or {})
 
     async def _evaluate(
         self, candidate: ADASArchitecture, generation: str | int
@@ -260,7 +271,7 @@ class ADASSearch:
         self.store.save(candidates, records)
 
     async def run(self) -> ADASSummary:
-        self.store.initialize(self.dataset, self.config)
+        self.store.initialize(self.dataset, self.config, self.run_fingerprint)
         candidates, records = self.store.load()
         seeds = initial_archive()
         completed_initial = 0

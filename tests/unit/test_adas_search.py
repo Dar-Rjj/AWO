@@ -175,3 +175,31 @@ def test_all_six_dataset_search_adapters_complete_seed_archive(
         ).run()
     )
     assert summary.completed_initial == 7
+
+
+def test_adas_resume_rejects_changed_run_fingerprint(tmp_path: Path) -> None:
+    def evaluator(candidate, generation):  # type: ignore[no-untyped-def]
+        return ADASObservation(score=0.5)
+
+    config = ADASConfig(generations=0)
+    asyncio.run(
+        ADASSearch(
+            dataset="gsm8k",
+            config=config,
+            generator=IncrementingGenerator(),
+            evaluator=evaluator,
+            output_dir=tmp_path,
+            run_fingerprint={"sample_ids": ["one"], "commit": "one"},
+        ).run()
+    )
+    with pytest.raises(ValueError, match="configuration"):
+        asyncio.run(
+            ADASSearch(
+                dataset="gsm8k",
+                config=config,
+                generator=IncrementingGenerator(),
+                evaluator=evaluator,
+                output_dir=tmp_path,
+                run_fingerprint={"sample_ids": ["two"], "commit": "one"},
+            ).run()
+        )

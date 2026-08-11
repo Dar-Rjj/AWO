@@ -3,6 +3,8 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 
+import pytest
+
 from awo.aflow.dsl import WorkflowCandidate
 from awo.aflow.search import (
     AFlowSearch,
@@ -226,3 +228,31 @@ def test_resume_rejects_candidate_tampering(tmp_path: Path) -> None:
         assert "integrity" in str(exc)
     else:
         raise AssertionError("tampered candidate was accepted")
+
+
+def test_resume_rejects_changed_run_fingerprint(tmp_path: Path) -> None:
+    def evaluator(candidate, repeat, round_number):  # type: ignore[no-untyped-def]
+        return ValidationObservation(score=1.0)
+
+    config = SearchConfig(max_generated_rounds=0, validation_repeats=1)
+    asyncio.run(
+        AFlowSearch(
+            dataset="gsm8k",
+            config=config,
+            generator=IncrementingGenerator(),
+            evaluator=evaluator,
+            output_dir=tmp_path,
+            run_fingerprint={"dataset_sha256": "a" * 64, "commit": "one"},
+        ).run()
+    )
+    with pytest.raises(ValueError, match="configuration"):
+        asyncio.run(
+            AFlowSearch(
+                dataset="gsm8k",
+                config=config,
+                generator=IncrementingGenerator(),
+                evaluator=evaluator,
+                output_dir=tmp_path,
+                run_fingerprint={"dataset_sha256": "a" * 64, "commit": "two"},
+            ).run()
+        )
