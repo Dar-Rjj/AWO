@@ -67,6 +67,7 @@ def test_cot_sc_has_fixed_five_plus_one_call_graph(dataset: str) -> None:
         ('{"solution_letter":"B"}', "B"),
         ("D", "D"),
         ("solution_letter: e", "E"),
+        ('{"thought":"line one\nline two","solution_letter": "A"}', "A"),
     ],
 )
 def test_selector_letter_parser(content: str, expected: str) -> None:

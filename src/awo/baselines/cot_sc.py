@@ -42,8 +42,7 @@ class CoTSCProtocolError(ValueError):
 
 def _solution_listing(candidates: list[str]) -> str:
     return "".join(
-        f"{chr(65 + index)}: \n{candidate}\n\n\n"
-        for index, candidate in enumerate(candidates)
+        f"{chr(65 + index)}: \n{candidate}\n\n\n" for index, candidate in enumerate(candidates)
     )
 
 
@@ -67,10 +66,13 @@ def parse_selector_letter(content: str, candidate_count: int = 5) -> str:
             match = re.search(r"[A-Z]", value.upper())
             if match and match.group() in allowed:
                 return match.group()
-    stripped = content.strip().upper().strip('"\'` .')
+    stripped = content.strip().upper().strip("\"'` .")
     if stripped in allowed:
         return stripped
-    match = re.search(r"(?i)solution_letter\s*(?:is|:|=)\s*[\"']?([A-Z])", content)
+    match = re.search(
+        r"(?i)[\"']?solution_letter[\"']?\s*(?:is|:|=)\s*[\"']?([A-Z])",
+        content,
+    )
     if match and match.group(1).upper() in allowed:
         return match.group(1).upper()
     raise CoTSCProtocolError("selector did not return one candidate letter A-E")
