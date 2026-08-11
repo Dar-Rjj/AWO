@@ -193,6 +193,45 @@ class ExperimentStore:
         self._write_json(self.root / "summary.json", dict(summary))
 
 
+def summarize_records(
+    spec: Mapping[str, Any],
+    records: Sequence[ExperimentRecord],
+    methods: Sequence[str],
+    repeats: int,
+) -> dict[str, Any]:
+    by_run: list[dict[str, Any]] = []
+    for repeat in range(1, repeats + 1):
+        for method in methods:
+            selected = [
+                record for record in records if record.repeat == repeat and record.method == method
+            ]
+            by_run.append(
+                {
+                    "method": method,
+                    "repeat": repeat,
+                    "score": fmean(record.score for record in selected),
+                    "sample_count": len(selected),
+                    "failure_count": sum(record.status != "ok" for record in selected),
+                    "call_count": sum(record.call_count for record in selected),
+                    "tokens": sum(record.tokens for record in selected),
+                    "cost": sum(record.cost for record in selected),
+                    "latency_seconds": sum(record.latency_seconds for record in selected),
+                }
+            )
+    return {
+        "schema_version": 1,
+        "spec": dict(spec),
+        "completed_records": len(records),
+        "by_run": by_run,
+        "totals": {
+            "failures": sum(record.status != "ok" for record in records),
+            "calls": sum(record.call_count for record in records),
+            "tokens": sum(record.tokens for record in records),
+            "cost": sum(record.cost for record in records),
+        },
+    }
+
+
 class ManualExperimentRunner:
     """Run every requested method/repeat/sample exactly once with crash recovery."""
 
@@ -315,38 +354,6 @@ class ManualExperimentRunner:
                         self.store.save(record)
                     records.append(record)
 
-        by_run: list[dict[str, Any]] = []
-        for repeat in range(1, self.repeats + 1):
-            for method in self.methods:
-                selected = [
-                    record
-                    for record in records
-                    if record.repeat == repeat and record.method == method
-                ]
-                by_run.append(
-                    {
-                        "method": method,
-                        "repeat": repeat,
-                        "score": fmean(record.score for record in selected),
-                        "sample_count": len(selected),
-                        "failure_count": sum(record.status != "ok" for record in selected),
-                        "call_count": sum(record.call_count for record in selected),
-                        "tokens": sum(record.tokens for record in selected),
-                        "cost": sum(record.cost for record in selected),
-                        "latency_seconds": sum(record.latency_seconds for record in selected),
-                    }
-                )
-        summary = {
-            "schema_version": 1,
-            "spec": self.spec,
-            "completed_records": len(records),
-            "by_run": by_run,
-            "totals": {
-                "failures": sum(record.status != "ok" for record in records),
-                "calls": sum(record.call_count for record in records),
-                "tokens": sum(record.tokens for record in records),
-                "cost": sum(record.cost for record in records),
-            },
-        }
+        summary = summarize_records(self.spec, records, self.methods, self.repeats)
         self.store.save_summary(summary)
         return summary

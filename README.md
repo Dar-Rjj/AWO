@@ -613,6 +613,31 @@ python scripts/run_manual_experiment.py \
 同一命令和输出目录再次运行不会产生重复请求。正式 3 次重复使用不同 repeat key，且不跨
 repeat 复用响应缓存。
 
+官方 AFlow 最佳 workflow 和冻结 ADAS architecture 使用同一套 sample ledger、内容寻址
+记录、原子替换、评分与续跑校验。除数据/配置/commit/切片外，runner 还冻结 executor
+fingerprint：AFlow 包含结果归档、graph、prompt、round 和 public-test SHA256；ADAS 包含
+来源、seed 或 candidate 文件 SHA256、architecture 名称和结构 SHA256。任一字段变化都不能
+复用原目录。
+
+```bash
+# hash 校验后的官方 AFlow 最佳 workflow
+python scripts/run_agentic_experiment.py \
+  aflow_official_best gsm8k data/raw/datasets/gsm8k_test.jsonl \
+  experiments/runs/aflow-gsm8k-smoke \
+  --results-root data/results --repeats 1 --limit 1
+
+# ADAS 官方 seed 0 的安全 DAG；也可用 --adas-candidate FROZEN.json
+python scripts/run_agentic_experiment.py \
+  adas gsm8k data/raw/datasets/gsm8k_test.jsonl \
+  experiments/runs/adas-gsm8k-smoke \
+  --adas-seed-index 0 --repeats 1 --limit 1
+```
+
+AFlow 的 HumanEval/MBPP 还必须分别传入
+`--public-tests data/raw/datasets/humaneval_public_test.jsonl` 或
+`mbpp_public_test.jsonl`；public tests 由 workflow 内部的受控 Docker `Test` operator 执行，
+失败反馈可供 operator 修复代码。最终评分另用隐藏 test，且隐藏 test 不向模型暴露。
+
 六数据集 IO 基础 smoke 已在实现 commit
 `3f018044b173b7d937288547bc8a7079808c47d7` 上完成。每个 test split 取首条样本，共 6 条：
 
@@ -734,6 +759,18 @@ python scripts/run_cot_sc_smoke.py gsm8k data/raw/datasets/gsm8k_validate.jsonl 
 python scripts/run_manual_experiment.py \
   gsm8k data/raw/datasets/gsm8k_test.jsonl experiments/runs/smoke-gsm8k \
   --methods io cot_sc --repeats 1 --limit 2
+
+# 可恢复、hash 锁定的官方 AFlow 最佳 workflow
+python scripts/run_agentic_experiment.py \
+  aflow_official_best gsm8k data/raw/datasets/gsm8k_test.jsonl \
+  experiments/runs/aflow-gsm8k-smoke \
+  --results-root data/results --repeats 1 --limit 1
+
+# 可恢复的冻结 ADAS agent
+python scripts/run_agentic_experiment.py \
+  adas gsm8k data/raw/datasets/gsm8k_test.jsonl \
+  experiments/runs/adas-gsm8k-smoke \
+  --adas-seed-index 0 --repeats 1 --limit 1
 
 # 单条 MedPrompt 3+5 真实链路 smoke
 python scripts/run_medprompt_smoke.py gsm8k data/raw/datasets/gsm8k_validate.jsonl \
