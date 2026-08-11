@@ -682,6 +682,27 @@ pass@1 为 1.0；相同命令重放前后审计行数均为 6。
 `deepseek/deepseek-chat`，provider 为 DeepInfra 12、Novita 7、StreamLake 23。与 IO smoke
 一样，这些单样本分数只用于链路验收，不用于效果结论。
 
+六数据集 ADAS executor 基础 smoke 已在 commit
+`cb1b4e8335a582b82907630a009949bfad542e78` 上完成。该检查固定官方 seed 0 的安全
+Chain-of-Thought DAG（architecture SHA256
+`2e15efea20436e963b92ca8770f8752e5dd35e0874b4f15c58caee71cec13868`），每题只执行 1
+个节点：
+
+| 数据集 | 分数 |
+| --- | ---: |
+| HotpotQA | 0.5 F1 |
+| DROP | 0.6667 F1 |
+| HumanEval | 1.0 pass@1 |
+| MBPP | 1.0 pass@1 |
+| GSM8K | 0.0 |
+| MATH | 1.0 |
+
+6 次请求全部成功且均一次完成，共 2,939 tokens、费用 `$0.0014005341`；requested/actual
+model 均为 `deepseek/deepseek-chat`，6 次均由 StreamLake 提供。HumanEval/MBPP 通过统一
+Docker hidden-test evaluator。完全相同的六条命令再次执行后，总审计行数保持为 6。该结果
+验证的是六任务 adapter、结构化 agent 输出、评分和续跑；不是搜索后最佳 ADAS agent 的效果
+结果，也不用于方法比较。
+
 ### 阶段 8：完整 Table 1
 
 1. 锁定代码 commit、配置和数据 manifest。
