@@ -65,7 +65,7 @@ def main() -> int:
             "official_round": bundle.spec.round,
         },
     )
-    public_tests = load_public_tests(args.public_tests) if args.public_tests else None
+    public_tests = load_public_tests(args.public_tests, examples) if args.public_tests else None
     result = asyncio.run(
         OfficialBestWorkflow(runtime, bundle, public_tests=public_tests).run(example)
     )

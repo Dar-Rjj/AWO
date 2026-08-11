@@ -155,7 +155,9 @@ def main() -> int:
             expected_artifact_sha256=artifact_hash,
         )
         public_tests = (
-            load_public_tests(args.public_tests) if args.public_tests is not None else None
+            load_public_tests(args.public_tests, examples)
+            if args.public_tests is not None
+            else None
         )
         executor = aflow_executor(bundle, public_tests, sandbox)
         fingerprint = {

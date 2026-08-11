@@ -52,9 +52,7 @@ def sha256_text(value: str) -> str:
 
 def test_frozen_manifest_names_all_six_official_best_rounds() -> None:
     root = Path(__file__).parents[2]
-    artifact_hash, specs = load_official_manifest(
-        root / "configs" / "aflow" / "official_best.yaml"
-    )
+    artifact_hash, specs = load_official_manifest(root / "configs" / "aflow" / "official_best.yaml")
     assert len(artifact_hash) == 64
     assert {name: spec.round for name, spec in specs.items()} == {
         "drop": 3,
@@ -92,10 +90,96 @@ def test_bundle_requires_marker_and_exact_file_hashes(tmp_path: Path) -> None:
         verify_official_bundle(tmp_path, spec, expected_artifact_sha256="a" * 64)
 
 
-def test_public_test_loader_is_entry_point_keyed(tmp_path: Path) -> None:
+def test_humaneval_public_tests_are_problem_id_keyed(tmp_path: Path) -> None:
     path = tmp_path / "public.jsonl"
-    path.write_text('{"entry_point":"solve","test":["assert candidate() == 1"]}\n')
-    assert load_public_tests(path) == {"solve": "assert candidate() == 1"}
+    path.write_text(
+        '{"problem_id":"HumanEval/1","entry_point":"solve",'
+        '"test":["assert candidate() == 1"]}\n'
+        '{"problem_id":"HumanEval/2","entry_point":"solve",'
+        '"test":["assert candidate() == 2"]}\n'
+    )
+    examples = [
+        BenchmarkExample(
+            1,
+            "humaneval",
+            "test",
+            "HumanEval/2",
+            "problem",
+            "tests",
+            entry_point="solve",
+        ),
+        BenchmarkExample(
+            1,
+            "humaneval",
+            "test",
+            "HumanEval/1",
+            "problem",
+            "tests",
+            entry_point="solve",
+        ),
+    ]
+    assert load_public_tests(path, examples) == {
+        "HumanEval/1": "assert candidate() == 1",
+        "HumanEval/2": "assert candidate() == 2",
+    }
+
+
+def test_mbpp_public_tests_use_verified_split_order_with_duplicate_names(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "public.jsonl"
+    path.write_text(
+        '{"entry_point":"same","test":["assert candidate(1) == 1"]}\n'
+        '{"entry_point":"other","test":["assert candidate(2) == 2"]}\n'
+        '{"entry_point":"same","test":["assert candidate(3) == 3"]}\n'
+    )
+    test_examples = [
+        BenchmarkExample(1, "mbpp", "test", "mbpp-1", "p", "t", entry_point="same"),
+        BenchmarkExample(1, "mbpp", "test", "mbpp-2", "p", "t", entry_point="other"),
+    ]
+    validate_examples = [
+        BenchmarkExample(
+            1,
+            "mbpp",
+            "validate",
+            "mbpp-3",
+            "p",
+            "t",
+            entry_point="same",
+        )
+    ]
+    assert load_public_tests(path, test_examples) == {
+        "mbpp-1": "assert candidate(1) == 1",
+        "mbpp-2": "assert candidate(2) == 2",
+    }
+    assert load_public_tests(path, validate_examples) == {"mbpp-3": "assert candidate(3) == 3"}
+
+
+def test_mbpp_public_test_order_mismatch_fails_closed(tmp_path: Path) -> None:
+    path = tmp_path / "public.jsonl"
+    path.write_text('{"entry_point":"wrong","test":["assert candidate()"]}\n')
+    examples = [BenchmarkExample(1, "mbpp", "test", "mbpp-1", "p", "t", entry_point="right")]
+    with pytest.raises(ArchivedWorkflowError, match="do not align"):
+        load_public_tests(path, examples)
+
+
+def test_missing_humaneval_public_test_fails_before_llm_call() -> None:
+    client = FakeClient([])
+    runtime = AFlowRuntime(client)  # type: ignore[arg-type]
+    spec = OfficialWorkflowSpec("humaneval", "HumanEval", 5, "g" * 64, "p" * 64)
+    bundle = OfficialWorkflowBundle(spec, Path("graph.py"), Path("prompt.py"), {})
+    example = BenchmarkExample(
+        1,
+        "humaneval",
+        "test",
+        "HumanEval/missing",
+        "problem",
+        "tests",
+        entry_point="solve",
+    )
+    with pytest.raises(ArchivedWorkflowError, match="no frozen public tests"):
+        asyncio.run(OfficialBestWorkflow(runtime, bundle, public_tests={}).run(example))
+    assert client.calls == []
 
 
 def test_native_hotpot_adapter_reconstructs_five_call_topology() -> None:

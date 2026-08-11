@@ -223,3 +223,15 @@
 - 决策：非法/重复 architecture 在加入 archive 前最多重新生成 3 次；合法 architecture 的
   validation 样本异常记 0 并保留在 fitness 分母，整代异常也以 0 分和错误文本进入 archive。
   这样不通过丢弃失败代改变实际生成代数，且所有成本与失败可审计。
+
+## A-027：AFlow 代码任务 public-test 关联
+
+- 状态：`artifact-limited`
+- 现象：HumanEval public-test 文件有稳定 `problem_id`，但只覆盖 159/164 条；test 中缺
+  `HumanEval/32`、`/38`、`/50`、`/83`，validation 中缺 `/105`。MBPP 的 427 条 public
+  tests 正好覆盖 341 test + 86 validation，却没有 task id，且有 8 组重复 entry point，不能
+  按函数名安全映射。
+- 决策：HumanEval 严格按 `problem_id`/sample id 关联，缺失样本在任何 LLM 请求前失败并记
+  0，不用 hidden test 冒充 public test。MBPP 仅在完整 public-test 序列与冻结的
+  test+validation entry-point 序列逐项一致时，按 test 前缀和 validation 后缀关联到 sample
+  id；任一错位立即拒绝运行。该限制单独报告，不能宣称五个缺失样本为 exact replay。

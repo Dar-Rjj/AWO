@@ -232,7 +232,9 @@ HumanEval round 5、MATH round 5、MBPP round 14。六份 graph/prompt 的 SHA25
 hash 后，由 `OfficialBestWorkflow` 原生重建已审计的六个固定拓扑。prompt.py 也不 import，
 仅通过 AST 接受大写名称到字符串字面量的直接赋值；任何 import、函数调用或表达式均拒绝。
 代码 workflow 使用冻结的 `humaneval_public_test.jsonl`/`mbpp_public_test.jsonl`，公开测试仍
-只在 Docker 沙箱执行。
+只在 Docker 沙箱执行。HumanEval 按工件中的 `problem_id` 关联；MBPP 工件没有 task id，
+因此先对完整 test/validation split 逐项验证 entry-point 顺序，再按 sample id 冻结映射。
+HumanEval 工件缺少的 5 个样本不使用 hidden test 回填，边界见 A-027。
 
 ## 7.3 AFlow 搜索协议
 

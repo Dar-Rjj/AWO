@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ast
 import json
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -152,8 +153,17 @@ def verify_official_bundle(
     )
 
 
-def load_public_tests(path: Path) -> dict[str, str]:
-    tests = {}
+def load_public_tests(
+    path: Path,
+    examples: Sequence[BenchmarkExample],
+) -> dict[str, str]:
+    if not examples:
+        raise ArchivedWorkflowError("public tests require a non-empty benchmark split")
+    datasets = {example.dataset for example in examples}
+    splits = {example.split for example in examples}
+    if len(datasets) != 1 or len(splits) != 1:
+        raise ArchivedWorkflowError("public tests require one complete dataset split")
+    records: list[tuple[str | None, str, str]] = []
     with Path(path).open("r", encoding="utf-8") as handle:
         for line_number, line in enumerate(handle, 1):
             if not line.strip():
@@ -168,9 +178,48 @@ def load_public_tests(path: Path) -> dict[str, str]:
             assertions = record.get("test")
             if not isinstance(entry_point, str) or not isinstance(assertions, list):
                 raise ArchivedWorkflowError(f"invalid public-test schema at {path}:{line_number}")
-            if entry_point in tests or not all(isinstance(item, str) for item in assertions):
+            if not all(isinstance(item, str) for item in assertions):
                 raise ArchivedWorkflowError(f"invalid public tests for {entry_point!r}")
-            tests[entry_point] = "\n".join(assertions)
+            problem_id = record.get("problem_id")
+            if problem_id is not None and not isinstance(problem_id, str):
+                raise ArchivedWorkflowError(f"invalid problem_id at {path}:{line_number}")
+            records.append((problem_id, entry_point, "\n".join(assertions)))
+
+    if records and all(problem_id is not None for problem_id, _, _ in records):
+        by_id: dict[str, tuple[str, str]] = {}
+        for problem_id, entry_point, assertions in records:
+            assert problem_id is not None
+            if problem_id in by_id:
+                raise ArchivedWorkflowError(f"duplicate public-test problem_id: {problem_id}")
+            by_id[problem_id] = (entry_point, assertions)
+        tests = {}
+        for example in examples:
+            matched = by_id.get(example.sample_id)
+            if matched is None:
+                continue
+            entry_point, assertions = matched
+            if entry_point != example.entry_point:
+                raise ArchivedWorkflowError(
+                    f"public test entry point mismatch for {example.sample_id}"
+                )
+            tests[example.sample_id] = assertions
+        return tests
+
+    if any(problem_id is not None for problem_id, _, _ in records):
+        raise ArchivedWorkflowError("public-test file mixes keyed and positional records")
+    if next(iter(datasets)) != "mbpp":
+        raise ArchivedWorkflowError("only frozen MBPP public tests may use positional mapping")
+    if len(records) < len(examples):
+        raise ArchivedWorkflowError("public-test file is shorter than benchmark split")
+    split = next(iter(splits))
+    selected = records[: len(examples)] if split == "test" else records[-len(examples) :]
+    tests = {}
+    for example, (_, entry_point, assertions) in zip(examples, selected):
+        if entry_point != example.entry_point:
+            raise ArchivedWorkflowError(
+                f"positional public tests do not align at {example.sample_id}"
+            )
+        tests[example.sample_id] = assertions
     return tests
 
 
@@ -211,15 +260,21 @@ class OfficialBestWorkflow:
             "response"
         ]
 
-    async def _test(self, problem: str, solution: str, entry_point: str) -> dict[str, Any]:
-        if entry_point not in self.public_tests:
-            raise ArchivedWorkflowError(f"no frozen public tests for entry point {entry_point}")
+    async def _test(
+        self,
+        problem: str,
+        solution: str,
+        entry_point: str,
+        sample_id: str,
+    ) -> dict[str, Any]:
+        if sample_id not in self.public_tests:
+            raise ArchivedWorkflowError(f"no frozen public tests for sample {sample_id}")
         self.trace.append("Test")
         return await Test(self.runtime)(
             problem,
             solution,
             entry_point,
-            self.public_tests[entry_point],
+            self.public_tests[sample_id],
         )
 
     async def run(self, example: BenchmarkExample) -> AFlowWorkflowResult:
@@ -280,8 +335,15 @@ class OfficialBestWorkflow:
 
     async def _run_humaneval(self, example: BenchmarkExample) -> str:
         assert example.entry_point is not None
+        if example.sample_id not in self.public_tests:
+            raise ArchivedWorkflowError(f"no frozen public tests for sample {example.sample_id}")
         solution = await self._code(example.prompt, example.entry_point, "")
-        tested = await self._test(example.prompt, solution, example.entry_point)
+        tested = await self._test(
+            example.prompt,
+            solution,
+            example.entry_point,
+            example.sample_id,
+        )
         if tested["result"]:
             return str(tested["solution"])
         return await self._code(
@@ -292,12 +354,19 @@ class OfficialBestWorkflow:
 
     async def _run_mbpp(self, example: BenchmarkExample) -> str:
         assert example.entry_point is not None
+        if example.sample_id not in self.public_tests:
+            raise ArchivedWorkflowError(f"no frozen public tests for sample {example.sample_id}")
         instruction = self.bundle.prompts["CODE_GENERATE_PROMPT"]
         solutions = [
             await self._code(example.prompt, example.entry_point, instruction) for _ in range(3)
         ]
         selected = await self._ensemble(solutions, example.prompt)
-        tested = await self._test(example.prompt, selected, example.entry_point)
+        tested = await self._test(
+            example.prompt,
+            selected,
+            example.entry_point,
+            example.sample_id,
+        )
         if tested["result"]:
             return str(tested["solution"])
         problem = (
