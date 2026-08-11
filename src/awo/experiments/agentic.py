@@ -7,6 +7,7 @@ from collections.abc import Awaitable, Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
+from awo.aflow import AFlowRuntime, WorkflowCandidate, execute_candidate
 from awo.baselines import score_baseline_result
 from awo.baselines.models import BaselineResult
 from awo.benchmarks.data import BenchmarkExample
@@ -21,6 +22,58 @@ from .runner import (
 )
 
 AgenticExecutor = Callable[[SampleCallLedger, BenchmarkExample], Awaitable[BaselineResult]]
+
+
+def aflow_candidate_executor(
+    candidate: WorkflowCandidate,
+    public_tests: Mapping[str, str],
+    sandbox: DockerSandbox | None,
+) -> AgenticExecutor:
+    """Build a frozen declarative-AFlow executor for validation-independent test runs."""
+
+    requires_public_tests = any(node["operator"] == "Test" for node in candidate.graph["nodes"])
+
+    async def execute(
+        client: SampleCallLedger,
+        example: BenchmarkExample,
+    ) -> BaselineResult:
+        if requires_public_tests and example.sample_id not in public_tests:
+            raise ValueError(f"no frozen public tests for sample {example.sample_id}")
+        runtime = AFlowRuntime(
+            client,  # type: ignore[arg-type]
+            sandbox=sandbox,
+            run_metadata={
+                "dataset": example.dataset,
+                "sample_id": example.sample_id,
+                "candidate_sha256": candidate.sha256,
+            },
+        )
+        prediction, trace = await execute_candidate(
+            candidate,
+            runtime,
+            dataset=example.dataset,
+            example={
+                "problem": example.prompt,
+                "entry_point": example.entry_point or "",
+            },
+            public_tests=public_tests.get(example.sample_id, ""),
+        )
+        return BaselineResult(
+            method="aflow",
+            dataset=example.dataset,
+            sample_id=example.sample_id,
+            prediction=prediction,
+            prompt_sha256=candidate.workflow_sha256,
+            responses=tuple(runtime.responses),
+            protocol="controlled-search/declarative_v1",
+            artifacts={
+                "candidate_sha256": candidate.sha256,
+                "workflow_sha256": candidate.workflow_sha256,
+                "trace": trace,
+            },
+        )
+
+    return execute
 
 
 class AgenticExperimentRunner:

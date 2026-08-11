@@ -17,20 +17,22 @@ from awo.aflow import (
     AFlowRuntime,
     OfficialBestWorkflow,
     OfficialWorkflowBundle,
+    WorkflowCandidate,
     load_official_manifest,
     load_public_tests,
+    validate_candidate,
     verify_official_bundle,
 )
 from awo.artifacts import sha256_file
 from awo.baselines.models import BaselineResult
 from awo.benchmarks.data import BenchmarkExample, load_and_normalize
 from awo.config import config_fingerprint, load_config
-from awo.experiments import AgenticExperimentRunner
+from awo.experiments import AgenticExperimentRunner, aflow_candidate_executor
 from awo.llm import JsonlRequestRecorder, OpenRouterClient, client_from_config
 from awo.sandbox import DockerSandbox
 from awo.tracking import build_manifest, write_manifest
 
-METHODS = ("aflow_official_best", "adas")
+METHODS = ("aflow", "aflow_official_best", "adas")
 DATASETS = ("hotpotqa", "drop", "humaneval", "mbpp", "gsm8k", "math")
 
 
@@ -46,6 +48,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--limit", type=int)
     parser.add_argument("--results-root", type=Path)
     parser.add_argument("--public-tests", type=Path)
+    parser.add_argument("--aflow-candidate", type=Path)
     adas_source = parser.add_mutually_exclusive_group()
     adas_source.add_argument("--adas-seed-index", type=int, choices=range(7))
     adas_source.add_argument("--adas-candidate", type=Path)
@@ -130,8 +133,23 @@ def main() -> int:
             parser.error("--public-tests is required for AFlow code workflows")
         if args.adas_seed_index is not None or args.adas_candidate is not None:
             parser.error("ADAS candidate options cannot be used with AFlow")
-    elif args.results_root is not None or args.public_tests is not None:
-        parser.error("AFlow artifact options cannot be used with ADAS")
+        if args.aflow_candidate is not None:
+            parser.error("--aflow-candidate is only valid for searched AFlow")
+    elif args.method == "aflow":
+        if args.aflow_candidate is None:
+            parser.error("--aflow-candidate is required for searched AFlow")
+        if args.results_root is not None:
+            parser.error("--results-root is only valid for official AFlow replay")
+        if args.dataset in {"humaneval", "mbpp"} and args.public_tests is None:
+            parser.error("--public-tests is required for AFlow code workflows")
+        if args.adas_seed_index is not None or args.adas_candidate is not None:
+            parser.error("ADAS candidate options cannot be used with AFlow")
+    elif (
+        args.results_root is not None
+        or args.public_tests is not None
+        or args.aflow_candidate is not None
+    ):
+        parser.error("AFlow options cannot be used with ADAS")
 
     examples = load_and_normalize(args.dataset_jsonl, args.dataset, args.split)
     stop = None if args.limit is None else args.start + args.limit
@@ -142,7 +160,7 @@ def main() -> int:
     config = load_config(args.config)
     manifest = build_manifest(args.config)
     sandbox_datasets = {"humaneval", "mbpp"}
-    if args.method == "aflow_official_best":
+    if args.method in {"aflow", "aflow_official_best"}:
         sandbox_datasets.update({"gsm8k", "math"})
     sandbox = DockerSandbox() if args.dataset in sandbox_datasets else None
 
@@ -166,6 +184,26 @@ def main() -> int:
             "official_round": bundle.spec.round,
             "graph_sha256": bundle.spec.graph_sha256,
             "prompt_sha256": bundle.spec.prompt_sha256,
+            "public_tests_sha256": (
+                sha256_file(args.public_tests) if args.public_tests is not None else None
+            ),
+        }
+    elif args.method == "aflow":
+        assert args.aflow_candidate is not None
+        payload = json.loads(args.aflow_candidate.read_text(encoding="utf-8"))
+        if not isinstance(payload, dict):
+            raise ValueError("AFlow candidate file must contain one JSON object")
+        candidate = WorkflowCandidate.from_dict(payload)
+        validate_candidate(candidate, args.dataset)
+        public_tests = (
+            load_public_tests(args.public_tests, examples) if args.public_tests is not None else {}
+        )
+        executor = aflow_candidate_executor(candidate, public_tests, sandbox)
+        fingerprint = {
+            "protocol": "controlled-search/declarative_v1",
+            "candidate_file_sha256": sha256_file(args.aflow_candidate),
+            "candidate_sha256": candidate.sha256,
+            "workflow_sha256": candidate.workflow_sha256,
             "public_tests_sha256": (
                 sha256_file(args.public_tests) if args.public_tests is not None else None
             ),

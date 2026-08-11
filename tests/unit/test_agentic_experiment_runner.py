@@ -1,13 +1,15 @@
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 from typing import Any
 
 import pytest
 
+from awo.aflow import WorkflowCandidate
 from awo.baselines.models import BaselineResult
 from awo.benchmarks.data import BenchmarkExample
-from awo.experiments import AgenticExperimentRunner
+from awo.experiments import AgenticExperimentRunner, aflow_candidate_executor
 from awo.llm import ChatResult, TokenUsage
 
 
@@ -124,3 +126,37 @@ def test_agentic_resume_rejects_changed_executor(tmp_path: Path) -> None:
     )
     with pytest.raises(ValueError, match="spec"):
         runner.run()
+
+
+def test_searched_aflow_test_node_requires_sample_public_tests() -> None:
+    candidate = WorkflowCandidate(
+        modification="test generated code",
+        graph={
+            "schema_version": 1,
+            "nodes": [
+                {
+                    "id": "test",
+                    "operator": "Test",
+                    "inputs": {
+                        "problem": "$problem",
+                        "solution": "def solve(): return 1",
+                        "entry_point": "$entry_point",
+                    },
+                }
+            ],
+            "output": "$test.solution",
+        },
+    )
+    client = FakeClient()
+    item = BenchmarkExample(
+        1,
+        "humaneval",
+        "test",
+        "HumanEval/missing",
+        "problem",
+        "tests",
+        entry_point="solve",
+    )
+    with pytest.raises(ValueError, match="no frozen public tests"):
+        asyncio.run(aflow_candidate_executor(candidate, {}, None)(client, item))
+    assert client.calls == []

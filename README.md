@@ -652,6 +652,13 @@ python scripts/run_agentic_experiment.py \
   adas gsm8k data/raw/datasets/gsm8k_test.jsonl \
   experiments/runs/adas-gsm8k-smoke \
   --adas-seed-index 0 --repeats 1 --limit 1
+
+# 执行 AFlow 搜索冻结的 declarative candidate
+python scripts/run_agentic_experiment.py \
+  aflow gsm8k data/raw/datasets/gsm8k_test.jsonl \
+  experiments/runs/aflow-searched-gsm8k \
+  --aflow-candidate experiments/runs/search-aflow-gsm8k/best_candidate.json \
+  --repeats 1 --limit 1
 ```
 
 AFlow 的 HumanEval/MBPP 还必须分别传入
