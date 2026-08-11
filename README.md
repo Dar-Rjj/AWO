@@ -632,6 +632,31 @@ HumanEval 和 MBPP 均通过 Docker 沙箱执行测试。用完全相同的参�
 `experiments/runs/io-smoke-<dataset>/`（实验产物默认不纳入 Git）。该 1-shot 结果只用于验证
 基础设施，不能用于方法效果比较。
 
+六数据集 CoT-SC 复杂链路 smoke 也已完成；每题严格执行 5 个候选 + 1 次 selector。最终
+有效结果为：
+
+| 数据集 | 分数 |
+| --- | ---: |
+| HotpotQA | 0.5714 F1 |
+| DROP | 0.0435 F1 |
+| HumanEval | 1.0 pass@1 |
+| MBPP | 1.0 pass@1 |
+| GSM8K | 1.0 |
+| MATH | 1.0 |
+
+有效 sweep 共 36 次请求、22,816 tokens、费用 `$0.0116840119`，无失败。首次运行时 MBPP
+selector 返回了带未转义换行的近似 JSON，合法答案字段写作 `"solution_letter": "A"`；旧
+降级解析器只接受不带引号的键，因此 6 次调用成功后协议解析失败。commit
+`5a2a2dba9327884d0389707800cd680121f6b64b` 在仍然只接受 A–E 的前提下允许字段名带引号，
+并加入真实响应形态的回归测试。修复后使用新目录重跑 MBPP，通过统一 Docker evaluator，
+pass@1 为 1.0；相同命令重放前后审计行数均为 6。
+
+为避免“修复后覆盖失败成本”，原目录 `cot-sc-smoke-mbpp` 与新目录
+`cot-sc-smoke-mbpp-fixed` 均被保留。计入首次失败后，整个排障过程的真实总开销为 42 次
+请求、24,693 tokens、`$0.0129576935`；所有请求均一次成功，requested/actual model 均为
+`deepseek/deepseek-chat`，provider 为 DeepInfra 12、Novita 7、StreamLake 23。与 IO smoke
+一样，这些单样本分数只用于链路验收，不用于效果结论。
+
 ### 阶段 8：完整 Table 1
 
 1. 锁定代码 commit、配置和数据 manifest。
