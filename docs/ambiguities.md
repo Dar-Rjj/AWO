@@ -204,3 +204,22 @@
   当前数据集在论文代码中声明的 operator、向后引用、字面量、列表和字符串拼接。候选 Python
   永不 import/exec；graph+prompt 内容哈希用于去重，完整候选哈希用于溯源。该变化保留
   operator/graph 搜索空间的核心语义，但明确标记为受控复现而非逐字节执行上游生成代码。
+
+## A-025：ADAS 候选 `forward()` 与七个初始架构
+
+- 状态：`protocol-compatible`
+- 现象：官方 ADAS 让 meta-agent 生成 Python `forward(self, taskInfo)` 并在宿主 `exec`；
+  seed 中还包含循环、提前停止与动态专家分支。AFlow Table 1 的六任务改写没有公开。
+- 决策：保留七个 seed 的意图、完整 archive、每代 proposal+2 reflection 和 30 代搜索，
+  但把架构表示为最多 12 节点的 `agent_dag_v1`。Self-Refine 最大 5 次修订静态展开，
+  动态角色由 router 输出作为专家节点上下文；因此调用图不是原 Python 的 exact execution。
+  所有候选只作数据解释，绝不在宿主或容器中执行 meta-agent 生成的控制代码。
+
+## A-026：ADAS 失败代的调试与零分语义
+
+- 状态：`resolved-for-primary`
+- 现象：官方 ADAS 在候选执行异常或 validation 均为 0 时，可追加调试 meta prompt 并重试，
+  失败后不加入 archive；本项目全局预注册协议要求最终失败进入错误报告并记 0。
+- 决策：非法/重复 architecture 在加入 archive 前最多重新生成 3 次；合法 architecture 的
+  validation 样本异常记 0 并保留在 fitness 分母，整代异常也以 0 分和错误文本进入 archive。
+  这样不通过丢弃失败代改变实际生成代数，且所有成本与失败可审计。

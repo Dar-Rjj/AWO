@@ -150,6 +150,22 @@ prompt hash 和逐请求 provider 审计信息。
 
 ADAS 上游公开了多个自包含 domain，但没有 AFlow Table 1 所用的六任务统一 adapter、初始 archive 和完整搜索配置。本项目将复用 Meta Agent Search，并将自建部分标记为 `protocol-compatible`。
 
+固定 DROP 实现确认了以下公开算法细节：
+
+- 初始 archive 为 Chain-of-Thought、Self-Consistency、Self-Refine、LLM Debate、
+  Step-back Abstraction、Quality-Diversity 和 Dynamic Assignment of Roles；
+- 每个生成代先 proposal，再在同一消息历史上连续做两次 reflection；
+- 默认生成 30 代，meta-agent temperature 为 0.8；
+- 每次候选评估后连同 fitness 加入完整 archive，下一代看到整个 archive；
+- 官方候选是一个 Python `forward(self, taskInfo)`，通过宿主 `exec` 动态加载；
+- 官方 DROP 默认 validation size 为 128，但 AFlow Table 1 六任务的 validation 取样和
+  adapter 没有公开。
+
+本项目保留七 seed、三次 meta 调用、完整 archive 和 30 代循环；六任务沿用已冻结的 AFlow
+validation split，不另造 128 条子集。候选表示改为 `agent_dag_v1`，并由解释器逐节点调用
+统一 OpenRouter 客户端。该安全适配及七 seed 的 DAG 翻译均明确属于
+`protocol-compatible`。
+
 ## 5. OpenRouter 客户端参考
 
 本地参考：

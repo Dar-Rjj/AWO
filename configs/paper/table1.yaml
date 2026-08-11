@@ -16,6 +16,10 @@ aflow:
   workflow_language: declarative_v1
 adas:
   max_rounds: 30
+  initial_archive_size: 7
+  meta_reflections: 2
+  max_generation_attempts: 3
+  architecture_language: agent_dag_v1
 execution:
   cache_scope: run
   reuse_cache_across_repeats: false

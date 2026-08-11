@@ -10,8 +10,8 @@
 > 当前状态：阶段 0（协议/工件冻结）、阶段 1（项目脚手架）、阶段 2
 >（统一 OpenRouter 客户端）、阶段 3（数据与统一 evaluator）和阶段 4（六个手工
 > baselines）已完成。真实 preflight 已确认 `deepseek/deepseek-chat` 可用；下一步为
-> AFlow 主方法；operator/runtime、官方最佳 workflow 重放和受控搜索状态机已完成，
-> 下一步为 ADAS。
+> AFlow 主方法和 ADAS protocol-compatible baseline 均已完成受控实现；下一步为
+> 六任务 smoke/pilot 与完整 Table 1 执行。
 
 ## 1. 复现范围
 
@@ -542,6 +542,39 @@ benchmark validation 数据，也不计作完整搜索结果。
 2. 为六个数据集实现 adapter 和 task prompt。
 3. 接入统一 evaluator 和安全沙箱。
 4. 实现 30 轮搜索及最优 agent 冻结。
+
+本阶段已完成。固定 ADAS commit `2702bee…` 的 Meta Agent Search 核心语义为：先评估
+7 个初始架构，然后每代执行 1 次 proposal 和 2 次 reflection，把候选加入完整 archive，
+共生成 30 代。本项目保留该 archive 条件化与 3-call meta 流程，meta-agent 和所有候选
+executor 均使用统一 OpenRouter `deepseek/deepseek-chat`。
+
+AFlow Table 1 使用的六任务 ADAS adapter 未公开，且官方实现会在宿主 `exec` 候选
+`forward()`。本项目因此标记为 `protocol-compatible`：将 7 个官方 seed 翻译为
+`agent_dag_v1`，generated architecture 最多 12 个 LLM 节点，只允许角色、温度、输出字段、
+字面指令和向后引用；不接受或执行 Python、import、文件/网络操作和动态控制流。HumanEval/
+MBPP 的最终模型代码只交给与其他方法相同的锁定 Docker evaluator。
+
+搜索 evaluator 在构造时拒绝任何 test split；validation 样本级失败记 0。每个 archive 条目
+保存候选/架构双 SHA256、fitness、生成与执行 token/费用、错误和代数，配置哈希不一致时
+禁止恢复。最终最佳 agent 冻结后才能进入 3 次独立 test run。
+
+真实 GSM8K meta smoke 的首个完整 run 为 3 次请求（proposal、reflection 1、reflection 2），
+共 14,638 tokens、费用 `$0.00621582`，provider 为 `DeepInfra: 2, Novita: 1`；三次均
+一次成功，最终生成 4 节点 `Optimized Diverse Critique`，DSL 验证通过。真实 seed
+Chain-of-Thought executor smoke 为 1 次请求、261 tokens、费用 `$0.0001314`，provider
+`DeepInfra`，答案 36、得分 1.0。审计记录均不含凭据。
+
+运行命令：
+
+```bash
+python scripts/run_adas_meta_smoke.py \
+  --dataset gsm8k \
+  --record-file artifacts/smoke/adas_meta_gsm8k.jsonl
+
+python scripts/run_adas_executor_smoke.py \
+  gsm8k data/raw/datasets/gsm8k_validate.jsonl \
+  --record-file artifacts/smoke/adas_executor_gsm8k.jsonl
+```
 
 验收：六个任务都能完成小规模搜索，所有自建适配均有 provenance 标签。
 
