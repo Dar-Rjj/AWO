@@ -12,8 +12,38 @@ from awo.adas.executor import run_architecture
 from awo.adas.search import ADASObservation
 from awo.baselines.runner import score_baseline_result
 from awo.benchmarks.data import BenchmarkExample
-from awo.llm import OpenRouterClient
+from awo.llm import ChatResult, OpenRouterClient
 from awo.sandbox import DockerSandbox
+
+
+class _CallLedger:
+    """Capture successful calls even when ADAS field parsing fails afterward."""
+
+    def __init__(self, client: OpenRouterClient, generation: str | int) -> None:
+        self.client = client
+        self.generation = generation
+        self.responses: list[ChatResult] = []
+
+    def chat(
+        self,
+        messages: Any,
+        *,
+        temperature: float | None = None,
+        max_tokens: int | None = None,
+        metadata: Any = None,
+    ) -> Any:
+        enriched = {
+            **dict(metadata or {}),
+            "validation_generation": self.generation,
+        }
+        response = self.client.chat(
+            messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            metadata=enriched,
+        )
+        self.responses.append(response)
+        return response
 
 
 class ADASValidationEvaluator:
@@ -51,21 +81,26 @@ class ADASValidationEvaluator:
             example: BenchmarkExample,
         ) -> tuple[float, float, int, dict[str, Any] | None]:
             async with semaphore:
+                ledger = _CallLedger(self.client, generation)
                 try:
-                    result = await run_architecture(candidate, self.client, example)
+                    result = await run_architecture(
+                        candidate,
+                        ledger,  # type: ignore[arg-type]
+                        example,
+                    )
                     score = score_baseline_result(
                         example,
                         result,
                         sandbox=self.sandbox,
                     )
-                    cost = sum(response.usage.cost or 0.0 for response in result.responses)
-                    tokens = sum(response.usage.total_tokens for response in result.responses)
+                    cost = sum(response.usage.cost or 0.0 for response in ledger.responses)
+                    tokens = sum(response.usage.total_tokens for response in ledger.responses)
                     return score.score, cost, tokens, None
                 except Exception as exc:
                     return (
                         0.0,
-                        0.0,
-                        0,
+                        sum(response.usage.cost or 0.0 for response in ledger.responses),
+                        sum(response.usage.total_tokens for response in ledger.responses),
                         {
                             "sample_id": example.sample_id,
                             "error": f"{type(exc).__name__}: {exc}",

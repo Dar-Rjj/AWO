@@ -19,6 +19,7 @@ from awo.aflow.dsl import (
     initial_candidate,
     validate_candidate,
 )
+from awo.aflow.evaluation import AFlowValidationEvaluator
 from awo.aflow.operators import (
     AnswerGenerate,
     Custom,
@@ -43,6 +44,7 @@ from awo.aflow.search import (
 __all__ = [
     "AFlowRuntime",
     "AFlowSearch",
+    "AFlowValidationEvaluator",
     "AFlowWorkflowResult",
     "AnswerGenerate",
     "ArchivedWorkflowError",

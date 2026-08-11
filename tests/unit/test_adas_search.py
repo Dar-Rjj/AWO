@@ -105,14 +105,19 @@ def test_evaluation_failure_is_archived_as_zero(tmp_path: Path) -> None:
 
 
 class FakeClient:
-    def chat(self, messages, *, temperature=None, metadata=None):  # type: ignore[no-untyped-def]
+    def __init__(self, content: str = '{"thinking":"calculate","answer":"36"}') -> None:
+        self.content = content
+
+    def chat(  # type: ignore[no-untyped-def]
+        self, messages, *, temperature=None, max_tokens=None, metadata=None
+    ):
         return ChatResult(
             request_id="request",
             response_id="response",
             requested_model="deepseek/deepseek-chat",
             actual_model="deepseek/deepseek-chat",
             provider="test",
-            content='{"thinking":"calculate","answer":"36"}',
+            content=self.content,
             finish_reason="stop",
             usage=TokenUsage(total_tokens=10, cost=0.001),
             attempts=1,
@@ -138,6 +143,19 @@ def test_validation_evaluator_rejects_test_split_and_scores_validation() -> None
     )
     assert observation.score == 1.0
     assert observation.tokens == 10
+
+
+def test_adas_validation_keeps_cost_when_field_parsing_fails() -> None:
+    validation_example = BenchmarkExample(1, "gsm8k", "validate", "validate-0", "6 squared?", "36")
+    observation = asyncio.run(
+        ADASValidationEvaluator(  # type: ignore[arg-type]
+            FakeClient("not json"), [validation_example]
+        )(initial_archive()[0], "initial-1")
+    )
+    assert observation.score == 0.0
+    assert observation.tokens == 10
+    assert observation.cost == 0.001
+    assert observation.details["failure_count"] == 1
 
 
 @pytest.mark.parametrize("dataset", ["hotpotqa", "drop", "humaneval", "mbpp", "gsm8k", "math"])

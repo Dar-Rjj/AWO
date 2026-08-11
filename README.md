@@ -514,7 +514,9 @@ operator 拓扑。prompt.py 仅作 AST 字符串字面量读取，代码任务�
 第四子步骤已完成：初始 workflow 独立做 5 次 validation，随后最多生成 20 轮，每轮同样
 做 5 次 validation。父池固定为初始 workflow 加最高分的 3 个生成 workflow，选择概率严格
 使用 `alpha=0.4`、`lambda=0.2` 的 uniform/softmax 混合；连续 5 轮无严格改善早停。
-validation 异常保留为 0 分，不缩小分母。
+validation evaluator 在构造时拒绝 test split，并对整份冻结 validation slice 使用统一评分器；
+异常保留为 0 分，不缩小分母。operator 在模型调用成功后解析失败时，runtime 仍把该次
+token/费用计入 observation。
 
 搜索候选使用 `declarative_v1` JSON DSL：最多 10 个节点，只接受六任务各自在论文代码中
 注册的 operator 与向后引用，不执行 optimizer 生成的 Python。graph/prompt 内容用于重复
@@ -554,7 +556,8 @@ AFlow Table 1 使用的六任务 ADAS adapter 未公开，且官方实现会在�
 字面指令和向后引用；不接受或执行 Python、import、文件/网络操作和动态控制流。HumanEval/
 MBPP 的最终模型代码只交给与其他方法相同的锁定 Docker evaluator。
 
-搜索 evaluator 在构造时拒绝任何 test split；validation 样本级失败记 0。每个 archive 条目
+搜索 evaluator 在构造时拒绝任何 test split；validation 样本级失败记 0。独立 call ledger
+在 agent 字段解析失败时仍保留此前成功请求的 token/费用。每个 archive 条目
 保存候选/架构双 SHA256、fitness、生成与执行 token/费用、错误和代数，配置哈希不一致时
 禁止恢复。最终最佳 agent 冻结后才能进入 3 次独立 test run。
 
