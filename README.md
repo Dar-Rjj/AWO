@@ -10,7 +10,8 @@
 > 当前状态：阶段 0（协议/工件冻结）、阶段 1（项目脚手架）、阶段 2
 >（统一 OpenRouter 客户端）、阶段 3（数据与统一 evaluator）和阶段 4（六个手工
 > baselines）已完成。真实 preflight 已确认 `deepseek/deepseek-chat` 可用；下一步为
-> AFlow 主方法；operator/runtime 已完成，下一步为历史 workflow 兼容与重放。
+> AFlow 主方法；operator/runtime 与历史 workflow 安全兼容层已完成，下一步为官方最佳
+> workflow 的六任务重放。
 
 ## 1. 复现范围
 
@@ -500,6 +501,15 @@ Python truthiness 被误判为接受；HotpotQA/DROP adapter 标记为 inferred�
 真实 AFlow blank workflow–GSM8K smoke 使用 `Custom` 单次调用，共 312 tokens、费用
 `$0.00021213`，答案 36、得分 1.0；provider 为 `DeepInfra`，请求一次成功且审计记录未
 包含凭据。
+
+第二子步骤已完成：官方 `graphs_test` 六个最佳 round 及其 graph/prompt SHA256 已冻结；兼容
+层不动态执行混用旧导入路径的归档 graph.py，而在哈希验证后以原生白名单 adapter 重建同一
+operator 拓扑。prompt.py 仅作 AST 字符串字面量读取，代码任务公开测试仍强制进入 Docker。
+
+真实 GSM8K 官方最佳 round 10 重放严格执行 `5×Custom + ScEnsemble + Programmer`，共
+7 次请求、4,154 tokens、费用 `$0.0020009917`；Programmer 生成代码在锁定 Docker 中一次
+执行成功，输出 36、得分 1.0。provider 分布为
+`DeepInfra: 3, Novita: 1, StreamLake: 3`；请求全部一次成功且审计记录未包含凭据。
 
 验收：可从初始模板生成、评估、选择并持久化新 workflow；测试数据不进入搜索。
 

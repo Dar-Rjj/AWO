@@ -135,6 +135,7 @@ def test_public_test_reflection_never_executes_on_host() -> None:
     assert result["result"] is True
     assert len(sandbox.sources) == 2
     assert len(client.calls) == 1
+    assert "candidate = candidate" in sandbox.sources[0]
 
 
 def test_sandbox_is_mandatory_for_code_execution_operators() -> None:

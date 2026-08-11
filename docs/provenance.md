@@ -205,6 +205,19 @@ AFlow `data/download_data.py` 在固定提交中给出三个 Google Drive 工件
 `CustomCodeGenerate` 显式加入 entry point 约束，修复上游 formatter 未消费 function_name
 参数的问题。上述变化属于安全/格式兼容层，不改变 workflow 的 LLM operator 拓扑。
 
+## 7.2 官方最佳 workflow 兼容
+
+官方 results 工件的 `graphs_test` 指向：DROP round 3、GSM8K round 10、HotpotQA round 3、
+HumanEval round 5、MATH round 5、MBPP round 14。六份 graph/prompt 的 SHA256 固定在
+`configs/aflow/official_best.yaml`。
+
+归档 graph 同时使用 `examples.aflow...` 和 `metagpt.ext.aflow...` 旧导入路径，且动态导入会
+执行归档 Python。本项目不执行 graph.py：验证 results 工件 marker、graph hash 和 prompt
+hash 后，由 `OfficialBestWorkflow` 原生重建已审计的六个固定拓扑。prompt.py 也不 import，
+仅通过 AST 接受大写名称到字符串字面量的直接赋值；任何 import、函数调用或表达式均拒绝。
+代码 workflow 使用冻结的 `humaneval_public_test.jsonl`/`mbpp_public_test.jsonl`，公开测试仍
+只在 Docker 沙箱执行。
+
 ## 8. 来源优先级
 
 冲突时按以下优先级处理，并保留敏感性配置：

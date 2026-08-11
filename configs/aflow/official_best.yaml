@@ -1,0 +1,33 @@
+schema_version: 1
+results_artifact_sha256: f460f9c9218216f6fbaf553f4f215248317b7f37dd715ae146cd38199eabe5f7
+workflows:
+  drop:
+    official_dataset: DROP
+    round: 3
+    graph_sha256: 9875fd770e23530ba609e7cb1d61ebc7efbcdfda0a83b357c5876f58516b9000
+    prompt_sha256: 2038713f193a8b6615a519aa6a2a552e967222ff9d7927fef1b485d8df0cd939
+  gsm8k:
+    official_dataset: GSM8K
+    round: 10
+    graph_sha256: c83c9a45d4c4486a224a15326bec117fdbe5becf760841b2e326611bba32e098
+    prompt_sha256: 44f5080fe87c0d25ccd06b2ff975721062f9261cd21fb00b9d6f9ea2537ac5f9
+  hotpotqa:
+    official_dataset: HotpotQA
+    round: 3
+    graph_sha256: 5b03bbec3b18b27f7b35f7dee9e577429ca337c814d8b86be4e3e40962569cd4
+    prompt_sha256: 89badaa027062915c38e985db8ff8581aa362f3951221a43067083ca7c83c6cd
+  humaneval:
+    official_dataset: HumanEval
+    round: 5
+    graph_sha256: e59fe265833434ce50194e27c8afac2f613d7a4914a8b7c8d63b726f7003e729
+    prompt_sha256: a5f54e6af3c3bedb4affee1d6a864c29c3925dcee0be75b71f6d48635b842cf7
+  math:
+    official_dataset: MATH
+    round: 5
+    graph_sha256: 0d67e403d959b2712e277a226d9ea9e231d1bfa497f3494f2f6f011c8b94c4e7
+    prompt_sha256: dcd75cf3c783f2bc7485dc435a0d5e901ccfe512f426f2a917a2f8f5de9c92c4
+  mbpp:
+    official_dataset: MBPP
+    round: 14
+    graph_sha256: b604835098807637c02d3452f175be5417a82d31a2080434e7bec1b155cc8d3a
+    prompt_sha256: 7efa6314ef3f1cbc0c14c69ec6e5522adc08ba0fbd3c82bfaf4b07b221fd913f

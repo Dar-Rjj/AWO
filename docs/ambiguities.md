@@ -185,3 +185,12 @@
   `CodeFormatter`，entry point 约束实际丢失。
 - 决策：保持 operator 名称、异步接口、prompt 和返回字段，但所有生成代码仅在锁定 Docker
   沙箱执行；代码生成提示词显式包含 entry point。安全修复不可在 `archive-faithful` 中关闭。
+
+## A-023：官方最佳 workflow 的旧导入路径与可信边界
+
+- 状态：`resolved-for-primary`
+- 现象：官方 `graphs_test` 同时引用 `examples.aflow`、`metagpt.ext.aflow`，无法在独立 AFlow
+  环境直接导入；动态加载 graph.py 还会执行归档中的任意顶层 Python。
+- 决策：固定六个官方 best round 及 graph/prompt SHA256；主重放不动态执行归档代码，而由
+  白名单原生 adapter 重建相同 operator 拓扑。prompt 仅允许 AST 字符串字面量赋值。结果
+  标记 `official-best/native-safe-adapter`，与归档答案重评分分开报告。

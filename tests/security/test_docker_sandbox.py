@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import asyncio
 import os
 
 import pytest
 
+from awo.aflow import AFlowRuntime
+from awo.aflow import Test as PublicTestOperator
 from awo.sandbox import PASS_MARKER, DockerSandbox, SandboxConfig
 
 pytestmark = pytest.mark.skipif(
@@ -55,3 +58,18 @@ def test_output_flood_is_stopped(sandbox: DockerSandbox) -> None:
     assert result.status == "output_limit"
     total_output = len(result.stdout.encode()) + len(result.stderr.encode())
     assert total_output <= sandbox.config.max_output_bytes
+
+
+def test_aflow_public_test_alias_runs_only_in_sandbox(sandbox: DockerSandbox) -> None:
+    runtime = AFlowRuntime(object(), sandbox=sandbox)  # type: ignore[arg-type]
+    result = asyncio.run(
+        PublicTestOperator(runtime)(
+            "increment",
+            "def increment(value):\n    return value + 1",
+            "increment",
+            "assert candidate(1) == 2",
+            test_loop=1,
+        )
+    )
+    assert result["result"] is True
+    assert runtime.responses == []

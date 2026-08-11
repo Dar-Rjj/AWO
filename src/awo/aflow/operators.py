@@ -227,8 +227,13 @@ class Programmer:
         return {"code": code, "output": output, "sandbox_statuses": statuses}
 
 
-def _public_test_source(solution: str, public_tests: str) -> str:
-    return f"{solution}\n\n{public_tests}\n\nprint({PASS_MARKER!r})\n"
+def _public_test_source(solution: str, public_tests: str, entry_point: str) -> str:
+    if not entry_point.isidentifier():
+        raise ValueError(f"invalid Python entry point: {entry_point!r}")
+    return (
+        f"{solution}\n\ncandidate = {entry_point}\n{public_tests}\n\n"
+        f"print({PASS_MARKER!r})\n"
+    )
 
 
 class Test:
@@ -245,10 +250,11 @@ class Test:
         public_tests: str,
         test_loop: int = 3,
     ) -> dict[str, Any]:
-        del entry_point  # Kept in the compatibility signature; tests already call the entry point.
         statuses = []
         for round_index in range(test_loop):
-            result = self.runtime.sandbox.run(_public_test_source(solution, public_tests))
+            result = self.runtime.sandbox.run(
+                _public_test_source(solution, public_tests, entry_point)
+            )
             statuses.append(result.status)
             if result.passed:
                 return {"result": True, "solution": solution, "sandbox_statuses": statuses}
@@ -265,7 +271,9 @@ class Test:
                 metadata={"format": "code", "round_index": round_index},
             )
             solution = extract_python_code(response.content)
-        result = self.runtime.sandbox.run(_public_test_source(solution, public_tests))
+        result = self.runtime.sandbox.run(
+            _public_test_source(solution, public_tests, entry_point)
+        )
         statuses.append(result.status)
         return {
             "result": result.passed,
