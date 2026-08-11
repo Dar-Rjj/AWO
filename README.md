@@ -593,6 +593,26 @@ Pilot：
 - 依据真实 token 分布估算全量成本；
 - 在用户确认预算后才进入全量运行。
 
+统一手工 baseline runner 已完成。每个
+`dataset × method × repeat × sample_id` 使用独立内容寻址 JSON 记录并原子替换；中断后只
+补跑缺失 key。每条记录包含完整 BaselineResult、统一分数、请求数、token、费用、延迟、
+provider 和错误；即使 selector/parser/evaluator 在若干请求后失败，sample call ledger 仍
+保留已成功调用的真实成本。恢复时同时校验数据 SHA256、完整配置 SHA256、实现 commit、
+样本切片、方法、重复数和 seed，任何变化都会拒绝复用。
+
+低成本单数据集 smoke 示例：
+
+```bash
+python scripts/run_manual_experiment.py \
+  gsm8k data/raw/datasets/gsm8k_test.jsonl experiments/runs/smoke-gsm8k \
+  --methods io cot_sc \
+  --repeats 1 \
+  --limit 2
+```
+
+同一命令和输出目录再次运行不会产生重复请求。正式 3 次重复使用不同 repeat key，且不跨
+repeat 复用响应缓存。
+
 ### 阶段 8：完整 Table 1
 
 1. 锁定代码 commit、配置和数据 manifest。
@@ -665,6 +685,11 @@ python scripts/run_cot_smoke.py gsm8k data/raw/datasets/gsm8k_validate.jsonl \
 # 单条 CoT-SC 5+1 真实链路 smoke
 python scripts/run_cot_sc_smoke.py gsm8k data/raw/datasets/gsm8k_validate.jsonl \
   --record-file experiments/cot-sc-gsm8k-smoke.jsonl
+
+# 可恢复的手工 baseline 数据集切片
+python scripts/run_manual_experiment.py \
+  gsm8k data/raw/datasets/gsm8k_test.jsonl experiments/runs/smoke-gsm8k \
+  --methods io cot_sc --repeats 1 --limit 2
 
 # 单条 MedPrompt 3+5 真实链路 smoke
 python scripts/run_medprompt_smoke.py gsm8k data/raw/datasets/gsm8k_validate.jsonl \
