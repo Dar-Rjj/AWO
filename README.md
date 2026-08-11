@@ -703,6 +703,32 @@ Docker hidden-test evaluator。完全相同的六条命令再次执行后，总�
 验证的是六任务 adapter、结构化 agent 输出、评分和续跑；不是搜索后最佳 ADAS agent 的效果
 结果，也不用于方法比较。
 
+六数据集官方 AFlow 最佳 workflow smoke 已在 commit
+`eb3e39bb2c5e66eb21aaa9b551df93044a7ca937` 上完成。results 工件、六份 graph/prompt 和
+两份代码 public-test 均先通过冻结 SHA256；白名单原生 adapter 执行的 operator trace 与
+归档拓扑一致：
+
+| 数据集 | LLM 调用 | operator trace | 分数 |
+| --- | ---: | --- | ---: |
+| HotpotQA | 5 | `3×AnswerGenerate → ScEnsemble → Custom` | 0.5714 F1 |
+| DROP | 5 | `3×AnswerGenerate → ScEnsemble → Custom` | 1.0 F1 |
+| HumanEval | 1 | `CustomCodeGenerate → Test` | 1.0 pass@1 |
+| MBPP | 4 | `3×CustomCodeGenerate → ScEnsemble → Test` | 1.0 pass@1 |
+| GSM8K | 7 | `5×Custom → ScEnsemble → Programmer` | 1.0 |
+| MATH | 6 | `Programmer → 4×Custom → ScEnsemble` | 1.0 |
+
+`Test`/`Programmer` 的 Docker 执行本身不增加 LLM 调用；只有失败反思或 Programmer 生成才计
+请求。有效 sweep 共 28 次请求、22,617 tokens、费用 `$0.0124408309`，无失败且所有请求均
+一次成功；requested/actual model 均为 `deepseek/deepseek-chat`，provider 为 DeepInfra 11、
+Novita 7、StreamLake 10。相同六条命令重放前后审计总行数均为 28。
+
+首次运行在 HumanEval 发起请求前发现 public-test loader 误用重复 entry point 作为全局键。
+commit `eb3e39b` 改为 HumanEval 按 `problem_id`、MBPP 在完整 split 顺序逐项校验后按 sample
+id 关联；边界和 HumanEval 工件缺失的 5 个 public tests 记录在 A-027。为了让有效 sweep
+使用单一 commit，修复后另建 `aflow-smoke-fixed-*` 六目录完整重跑；保留旧 HotpotQA/DROP
+目录后，排障全过程实际为 38 次请求、30,249 tokens、`$0.0159118294`，provider 为
+DeepInfra 15、Novita 12、StreamLake 11。单样本结果仅用于链路验收。
+
 ### 阶段 8：完整 Table 1
 
 1. 锁定代码 commit、配置和数据 manifest。
