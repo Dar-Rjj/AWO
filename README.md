@@ -524,6 +524,22 @@ token/费用计入 observation。
 搜索配置及 run fingerprint 一致时恢复；fingerprint 冻结数据 SHA256、validation sample
 ids、完整模型配置 SHA256 和实现 commit，已完成 round 不会重复调用。
 
+统一搜索入口只加载 validation split，完成后原子写出 `best_candidate.json`：
+
+```bash
+python scripts/run_search.py \
+  aflow gsm8k data/raw/datasets/gsm8k_validate.jsonl \
+  experiments/runs/search-aflow-gsm8k --config configs/smoke.yaml
+
+python scripts/run_search.py \
+  adas gsm8k data/raw/datasets/gsm8k_validate.jsonl \
+  experiments/runs/search-adas-gsm8k --config configs/smoke.yaml
+```
+
+`configs/smoke.yaml`/`pilot.yaml` 的 `sample_limit` 分别控制 3/20 条 validation 样本；paper
+配置未设 limit，使用完整 validation split。CLI 的 `--limit` 只用于显式覆盖并进入 run
+fingerprint。AFlow 的 HumanEval/MBPP 搜索还必须传相应 `--public-tests` 文件。
+
 单次真实 optimizer 候选生成 smoke：
 
 ```bash
