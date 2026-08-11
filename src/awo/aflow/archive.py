@@ -37,11 +37,7 @@ class OfficialWorkflowSpec:
 
     @property
     def relative_directory(self) -> Path:
-        return (
-            Path(self.official_dataset)
-            / "graphs_test"
-            / f"round_{self.round}"
-        )
+        return Path(self.official_dataset) / "graphs_test" / f"round_{self.round}"
 
 
 @dataclass(frozen=True)
@@ -203,9 +199,7 @@ class OfficialBestWorkflow:
 
     async def _ensemble(self, solutions: list[str], problem: str, *, qa: bool = False) -> str:
         self.trace.append("ScEnsemble")
-        return (
-            await ScEnsemble(self.runtime, qa_mode=qa)(solutions, problem)
-        )["response"]
+        return (await ScEnsemble(self.runtime, qa_mode=qa)(solutions, problem))["response"]
 
     async def _program(self, problem: str, analysis: str = "None") -> dict[str, Any]:
         self.trace.append("Programmer")
@@ -213,9 +207,9 @@ class OfficialBestWorkflow:
 
     async def _code(self, problem: str, entry_point: str, instruction: str) -> str:
         self.trace.append("CustomCodeGenerate")
-        return (
-            await CustomCodeGenerate(self.runtime)(problem, entry_point, instruction)
-        )["response"]
+        return (await CustomCodeGenerate(self.runtime)(problem, entry_point, instruction))[
+            "response"
+        ]
 
     async def _test(self, problem: str, solution: str, entry_point: str) -> dict[str, Any]:
         if entry_point not in self.public_tests:
@@ -280,9 +274,7 @@ class OfficialBestWorkflow:
         solutions = [refined, detailed]
         for _ in range(2):
             solutions.append(
-                await self._custom(
-                    example.prompt, self.bundle.prompts["GENERATE_SOLUTION_PROMPT"]
-                )
+                await self._custom(example.prompt, self.bundle.prompts["GENERATE_SOLUTION_PROMPT"])
             )
         return await self._ensemble(solutions, example.prompt)
 
@@ -302,15 +294,13 @@ class OfficialBestWorkflow:
         assert example.entry_point is not None
         instruction = self.bundle.prompts["CODE_GENERATE_PROMPT"]
         solutions = [
-            await self._code(example.prompt, example.entry_point, instruction)
-            for _ in range(3)
+            await self._code(example.prompt, example.entry_point, instruction) for _ in range(3)
         ]
         selected = await self._ensemble(solutions, example.prompt)
         tested = await self._test(example.prompt, selected, example.entry_point)
         if tested["result"]:
             return str(tested["solution"])
         problem = (
-            f"Problem: {example.prompt}\nFailed solution: {selected}\n"
-            f"Error: {tested['solution']}"
+            f"Problem: {example.prompt}\nFailed solution: {selected}\nError: {tested['solution']}"
         )
         return await self._custom(problem, self.bundle.prompts["FIX_CODE_PROMPT"])

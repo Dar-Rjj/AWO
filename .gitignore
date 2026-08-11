@@ -27,6 +27,7 @@ data/results/
 data/workspace/
 experiments/runs/
 reports/generated/
+artifacts/
 
 # Temporary files
 *.log

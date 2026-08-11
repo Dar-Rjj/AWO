@@ -12,6 +12,8 @@ aflow:
   early_stop_rounds: 5
   alpha: 0.4
   lambda: 0.2
+  max_generation_attempts: 3
+  workflow_language: declarative_v1
 adas:
   max_rounds: 30
 execution:

@@ -218,6 +218,24 @@ hash 后，由 `OfficialBestWorkflow` 原生重建已审计的六个固定拓扑
 代码 workflow 使用冻结的 `humaneval_public_test.jsonl`/`mbpp_public_test.jsonl`，公开测试仍
 只在 Docker 沙箱执行。
 
+## 7.3 AFlow 搜索协议
+
+初始单 agent workflow 单独做 5 次 validation，随后最多生成 20 轮；因此磁盘 round 编号
+为初始 round 1，加生成 round 2–21。每轮候选也固定做 5 次 validation，失败 repeat 记 0
+且保留在均值分母中。父候选池始终包含初始 workflow，再加入分数最高的 3 个生成 workflow。
+
+父候选概率复现固定提交中的计算：
+
+`p = lambda * Uniform + (1 - lambda) * softmax(alpha * (100 * score))`
+
+主协议固定 `alpha=0.4`、`lambda=0.2`、seed 42；连续 5 个生成 round 未严格改善全局最佳
+分数即早停。候选生成最多重试 3 次，非法 DSL 或与既有 graph+prompt 内容重复均触发重试。
+
+每轮保存 `candidate.json`、`evaluations.jsonl`、`record.json` 和全局 `state.json`，
+写入采用临时文件原子替换。恢复时必须通过 dataset 与完整搜索配置的 SHA256 校验，已完成
+round 不会重复调用。optimizer、executor 都使用同一 OpenRouter
+`deepseek/deepseek-chat` 客户端和请求审计器。
+
 ## 8. 来源优先级
 
 冲突时按以下优先级处理，并保留敏感性配置：

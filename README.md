@@ -10,8 +10,8 @@
 > 当前状态：阶段 0（协议/工件冻结）、阶段 1（项目脚手架）、阶段 2
 >（统一 OpenRouter 客户端）、阶段 3（数据与统一 evaluator）和阶段 4（六个手工
 > baselines）已完成。真实 preflight 已确认 `deepseek/deepseek-chat` 可用；下一步为
-> AFlow 主方法；operator/runtime 与历史 workflow 安全兼容层已完成，下一步为官方最佳
-> workflow 的六任务重放。
+> AFlow 主方法；operator/runtime、官方最佳 workflow 重放和受控搜索状态机已完成，
+> 下一步为 ADAS。
 
 ## 1. 复现范围
 
@@ -510,6 +510,29 @@ operator 拓扑。prompt.py 仅作 AST 字符串字面量读取，代码任务�
 7 次请求、4,154 tokens、费用 `$0.0020009917`；Programmer 生成代码在锁定 Docker 中一次
 执行成功，输出 36、得分 1.0。provider 分布为
 `DeepInfra: 3, Novita: 1, StreamLake: 3`；请求全部一次成功且审计记录未包含凭据。
+
+第四子步骤已完成：初始 workflow 独立做 5 次 validation，随后最多生成 20 轮，每轮同样
+做 5 次 validation。父池固定为初始 workflow 加最高分的 3 个生成 workflow，选择概率严格
+使用 `alpha=0.4`、`lambda=0.2` 的 uniform/softmax 混合；连续 5 轮无严格改善早停。
+validation 异常保留为 0 分，不缩小分母。
+
+搜索候选使用 `declarative_v1` JSON DSL：最多 10 个节点，只接受六任务各自在论文代码中
+注册的 operator 与向后引用，不执行 optimizer 生成的 Python。graph/prompt 内容用于重复
+检测；候选、5 次逐轮观察、父选择概率、token/费用和状态均原子持久化。相同输出目录只能在
+搜索配置哈希一致时恢复，已完成 round 不会重复调用。
+
+单次真实 optimizer 候选生成 smoke：
+
+```bash
+python scripts/run_aflow_optimizer_smoke.py \
+  --dataset gsm8k \
+  --record-file artifacts/smoke/aflow_optimizer_gsm8k.jsonl
+```
+
+真实 optimizer smoke 由 `deepseek/deepseek-chat` 一次生成 3 节点候选
+`2×Custom + ScEnsemble`，DSL 静态验证通过；共 785 tokens、费用 `$0.0005714`，
+provider 为 `Novita`，请求一次成功且审计记录未包含凭据。该调用只验证候选生成，不使用
+benchmark validation 数据，也不计作完整搜索结果。
 
 验收：可从初始模板生成、评估、选择并持久化新 workflow；测试数据不进入搜索。
 

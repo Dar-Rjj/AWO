@@ -24,7 +24,7 @@ GENERAL_SC_ENSEMBLE_PROMPT = (
     "Several solutions have been generated to address the given question. They are as follows:\n"
     "{solutions}\n\nCarefully evaluate these solutions and identify the answer that appears "
     "most frequently across them. This consistency in answers is crucial for determining the "
-    "most reliable solution.\n\nIn the \"thought\" field, provide a detailed explanation of your "
+    'most reliable solution.\n\nIn the "thought" field, provide a detailed explanation of your '
     'thought process. In the "solution_letter" field, output only the single letter ID (A, B, '
     "C, etc.) corresponding to the most consistent solution. Do not include any additional text "
     'or explanation in the "solution_letter" field.\n'
@@ -90,8 +90,7 @@ def _solution_listing(solutions: list[str]) -> str:
     if not 1 <= len(solutions) <= 26:
         raise ValueError("ScEnsemble requires between 1 and 26 solutions")
     return "".join(
-        f"{chr(65 + index)}: \n{solution}\n\n\n"
-        for index, solution in enumerate(solutions)
+        f"{chr(65 + index)}: \n{solution}\n\n\n" for index, solution in enumerate(solutions)
     )
 
 
@@ -129,9 +128,7 @@ class CustomCodeGenerate:
     def __init__(self, runtime: AFlowRuntime) -> None:
         self.runtime = runtime
 
-    async def __call__(
-        self, problem: str, entry_point: str, instruction: str
-    ) -> dict[str, str]:
+    async def __call__(self, problem: str, entry_point: str, instruction: str) -> dict[str, str]:
         prompt = instruction + problem + CODE_OUTPUT_INSTRUCTION.format(entry_point=entry_point)
         response = await self.runtime.chat(
             prompt,
@@ -230,10 +227,7 @@ class Programmer:
 def _public_test_source(solution: str, public_tests: str, entry_point: str) -> str:
     if not entry_point.isidentifier():
         raise ValueError(f"invalid Python entry point: {entry_point!r}")
-    return (
-        f"{solution}\n\ncandidate = {entry_point}\n{public_tests}\n\n"
-        f"print({PASS_MARKER!r})\n"
-    )
+    return f"{solution}\n\ncandidate = {entry_point}\n{public_tests}\n\nprint({PASS_MARKER!r})\n"
 
 
 class Test:
@@ -271,9 +265,7 @@ class Test:
                 metadata={"format": "code", "round_index": round_index},
             )
             solution = extract_python_code(response.content)
-        result = self.runtime.sandbox.run(
-            _public_test_source(solution, public_tests, entry_point)
-        )
+        result = self.runtime.sandbox.run(_public_test_source(solution, public_tests, entry_point))
         statuses.append(result.status)
         return {
             "result": result.passed,

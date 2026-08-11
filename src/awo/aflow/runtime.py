@@ -44,9 +44,7 @@ class AFlowRuntime:
             **self.run_metadata,
             **dict(metadata or {}),
         }
-        result = await asyncio.to_thread(
-            self.client.chat, messages, metadata=request_metadata
-        )
+        result = await asyncio.to_thread(self.client.chat, messages, metadata=request_metadata)
         self.responses.append(result)
         return result
 

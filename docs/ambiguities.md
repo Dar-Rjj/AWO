@@ -194,3 +194,13 @@
 - 决策：固定六个官方 best round 及 graph/prompt SHA256；主重放不动态执行归档代码，而由
   白名单原生 adapter 重建相同 operator 拓扑。prompt 仅允许 AST 字符串字面量赋值。结果
   标记 `official-best/native-safe-adapter`，与归档答案重评分分开报告。
+
+## A-024：AFlow 优化器生成可执行 Python
+
+- 状态：`controlled-adaptation`
+- 现象：论文同期实现让 optimizer 直接生成并动态导入 Python graph；候选可执行任意顶层
+  代码，且 graph 的静态合法性、内容去重和中断恢复都无法在执行前完整审计。
+- 决策：optimizer 改为输出版本化 `declarative_v1` JSON graph，最多 10 个节点，只允许
+  当前数据集在论文代码中声明的 operator、向后引用、字面量、列表和字符串拼接。候选 Python
+  永不 import/exec；graph+prompt 内容哈希用于去重，完整候选哈希用于溯源。该变化保留
+  operator/graph 搜索空间的核心语义，但明确标记为受控复现而非逐字节执行上游生成代码。
