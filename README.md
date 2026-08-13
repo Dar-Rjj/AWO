@@ -7,11 +7,10 @@
 - `/home/rjj/RealEvo/utils/llm_client/openrouter.py`
 - `/home/rjj/RealEvo/cfg/llm_client/openrouter.yaml`
 
-> 当前状态：阶段 0（协议/工件冻结）、阶段 1（项目脚手架）、阶段 2
->（统一 OpenRouter 客户端）、阶段 3（数据与统一 evaluator）和阶段 4（六个手工
-> baselines）已完成。真实 preflight 已确认 `deepseek/deepseek-chat` 可用；下一步为
-> AFlow 主方法和 ADAS protocol-compatible baseline 均已完成受控实现；下一步为
-> 六任务 smoke/pilot 与完整 Table 1 执行。
+> 当前状态：协议、工件、统一 OpenRouter 客户端、六任务 evaluator、六个手工 baseline、
+> AFlow 与 ADAS 的安全搜索/冻结/测试链路均已完成；真实 preflight 和两个 agentic
+> search→freeze→test smoke 已通过。Table 1 安全编排、聚合和预算门禁已实现，当前执行
+> 六任务扩展 smoke 与 20 样本 pilot；完整 Table 1 尚未启动。
 
 ## 1. 复现范围
 
@@ -879,18 +878,32 @@ python scripts/run_medprompt_smoke.py gsm8k data/raw/datasets/gsm8k_validate.jso
 # 单元、golden 和安全测试
 pytest -q
 
-# Smoke
+# 下面三条默认都是 dry-run：只校验数据、展开 30 个 job 并写 plan.json，不调用模型
 python scripts/run_table1.py --config configs/smoke.yaml
-
-# Pilot
 python scripts/run_table1.py --config configs/pilot.yaml
-
-# 完整实验；在 pilot 预算确认后运行
 python scripts/run_table1.py --config configs/paper/table1.yaml
 
+# 显式执行 bounded smoke/pilot
+python scripts/run_table1.py --config configs/smoke.yaml --execute --max-concurrency 2
+python scripts/run_table1.py --config configs/pilot.yaml --execute --max-concurrency 4
+
+# 完整实验需要在 pilot 费用确认后同时给出两重显式授权；不要提前运行
+python scripts/run_table1.py --config configs/paper/table1.yaml \
+  --execute --confirm-full-table1 --max-concurrency 4
+
 # 聚合报告
-python scripts/aggregate.py --runs experiments/runs --output reports/table1
+python scripts/aggregate.py \
+  --runs experiments/runs/aflow-table1-pilot \
+  --output reports/generated/table1-pilot
 ```
+
+`run_table1.py` 始终先生成内容可审计的 `plan.json`。未传 `--execute` 时不会调用模型；
+bounded smoke/pilot 只需一个执行开关，无 `sample_limit` 的 full plan 还必须显式传
+`--confirm-full-table1`。每个 agentic 方法严格按 validation search →
+`best_candidate.json` 冻结 → test 的依赖顺序运行，底层账本支持逐搜索轮和逐测试样本续跑。
+`aggregate.py` 递归读取同一配置的 run root，报告每个 dataset/method/repeat 的分数、均值、
+标准差、95% CI、论文差值、失败、调用、token、延迟和费用，并将搜索成本与冻结测试成本
+分开；不要把历史排障目录和正式 run root 混合聚合。
 
 ## 13. 运行记录与可复现性
 
@@ -930,6 +943,18 @@ experiments/runs/<run_id>/
 - 最终 AFlow/ADAS 三次完整测试。
 
 因此执行顺序必须是：单元测试 → smoke → pilot → 费用报告 → 预算确认 → 全量实验。不得跳过 pilot 直接启动全部 API 请求。
+
+编排器还会在付费执行前按协议固定调用数和 DSL 节点上限给出不含传输重试的逻辑请求区间。
+当前 dry-run 计划为：
+
+| 配置 | Manual test | ADAS search | ADAS test | AFlow search | AFlow test | 合计 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Pilot（每任务 validation/test 各 20） | 3,000–3,600 | 4,494–8,562 | 120–1,440 | 978–7,494 | 120–1,200 | 8,712–22,296 |
+| Full（3,613 test × 3） | 270,975–325,170 | 58,268–357,008 | 10,839–130,068 | 94,830–906,870 | 10,839–108,390 | 445,751–1,827,506 |
+
+区间上界按 AFlow 10 节点、ADAS 12 节点以及最大候选生成尝试数计算，明显偏保守；实际
+token、费用和路由 provider 必须以 pilot 审计日志为准，再外推 full budget。完整 Table 1
+在获得该实际费用报告及用户确认前保持关闭。
 
 ## 15. 完成标准
 
