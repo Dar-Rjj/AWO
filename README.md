@@ -781,6 +781,22 @@ id 关联；边界和 HumanEval 工件缺失的 5 个 public tests 记录在 A-0
 目录后，排障全过程实际为 38 次请求、30,249 tokens、`$0.0159118294`，provider 为
 DeepInfra 15、Novita 12、StreamLake 11。单样本结果仅用于链路验收。
 
+统一编排器的正式六任务 bounded smoke 已在 commit
+`c50b551bca294ddfb5c65d7700e8137e3d4d5b21` 上完成。配置固定每任务 3 条 validation、
+3 条 test、1 次重复，矩阵为 IO、CoT-SC、搜索后冻结 ADAS、搜索后冻结 AFlow，共 30 个
+可恢复 job、12 个冻结候选和 72 个测试样本-方法记录。完整链路实际为 940 次请求、
+720,649 tokens、费用 `$0.3373581439`：其中 validation 搜索 744 次、591,154 tokens、
+`$0.2721220534`；冻结候选与手工 baseline 测试 196 次、129,495 tokens、
+`$0.0652360905`。
+
+940 次 API 请求全部成功且均一次完成，requested/actual model 都是
+`deepseek/deepseek-chat`；provider 为 DeepInfra 393、Novita 214、StreamLake 333。72 个
+测试记录中 68 个完成评分、4 个 fail-closed 并按 0 分保留在分母：DROP CoT-SC 2 个、
+GSM8K CoT-SC 1 个均因 selector 未返回 A–E；MATH ADAS 1 个因结构化 JSON 含非法控制字符。
+同一命令完整重放后 30 个 job 均从账本恢复，请求总数仍为 940。3 样本分数只验证矩阵和
+失败处理，不用于论文效果结论；聚合报告位于被 Git 忽略的
+`reports/generated/table1-smoke/`。
+
 ### 阶段 8：完整 Table 1
 
 1. 锁定代码 commit、配置和数据 manifest。
@@ -949,12 +965,13 @@ experiments/runs/<run_id>/
 
 | 配置 | Manual test | ADAS search | ADAS test | AFlow search | AFlow test | 合计 |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Pilot（每任务 validation/test 各 20） | 3,000–3,600 | 4,494–8,562 | 120–1,440 | 978–7,494 | 120–1,200 | 8,712–22,296 |
-| Full（3,613 test × 3） | 270,975–325,170 | 58,268–357,008 | 10,839–130,068 | 94,830–906,870 | 10,839–108,390 | 445,751–1,827,506 |
+| Pilot（每任务 validation/test 各 20） | 3,000–3,600 | 1,254–8,562 | 120–1,440 | 978–7,494 | 120–1,200 | 5,472–22,296 |
+| Full（3,613 test × 3） | 270,975–325,170 | 33,914–357,008 | 10,839–130,068 | 94,830–906,870 | 10,839–108,390 | 421,397–1,827,506 |
 
-区间上界按 AFlow 10 节点、ADAS 12 节点以及最大候选生成尝试数计算，明显偏保守；实际
-token、费用和路由 provider 必须以 pilot 审计日志为准，再外推 full budget。完整 Table 1
-在获得该实际费用报告及用户确认前保持关闭。
+区间上界按 AFlow 10 节点、ADAS 12 节点以及最大候选生成尝试数计算，明显偏保守。ADAS
+下界按每个 architecture/sample 至少发起首节点计算：结构化输出 fail-closed 时不会调用
+后续 DAG 节点。实际 token、费用和路由 provider 必须以 pilot 审计日志为准，再外推 full
+budget。完整 Table 1 在获得该实际费用报告及用户确认前保持关闭。
 
 ## 15. 完成标准
 

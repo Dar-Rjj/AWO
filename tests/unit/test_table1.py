@@ -67,7 +67,7 @@ def test_plan_orders_search_before_frozen_test_and_is_bounded(tmp_path: Path) ->
     assert "--limit" in manual_command
     assert "--adas-candidate" in plan["jobs"][2]["command"]
     assert "--aflow-candidate" in plan["jobs"][4]["command"]
-    assert plan["logical_call_bounds"]["all"] == {"minimum": 59, "maximum": 143}
+    assert plan["logical_call_bounds"]["all"] == {"minimum": 32, "maximum": 143}
 
 
 def test_unbounded_plan_requires_second_confirmation() -> None:

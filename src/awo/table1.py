@@ -103,9 +103,12 @@ def _logical_call_bounds(
         if "adas" in methods:
             generations = int(config["adas"].get("max_rounds", 30))
             attempts = int(config["adas"].get("max_generation_attempts", 3))
-            # Seven seeds contain 34 nodes in total. Every generation makes three
-            # meta calls per attempt and evaluates one generated 1..12-node DAG.
-            result["adas_search"]["minimum"] += 34 * validation
+            # Seven seeds contain 34 nodes in total, but malformed structured output
+            # fails a DAG closed before later nodes. The lower bound is therefore one
+            # first-node call per seed/sample; the upper bound executes every node.
+            # Every generation makes three meta calls per attempt and evaluates one
+            # generated 1..12-node DAG when generation succeeds.
+            result["adas_search"]["minimum"] += 7 * validation
             result["adas_search"]["maximum"] += 34 * validation
             result["adas_search"]["minimum"] += generations * (3 + validation)
             result["adas_search"]["maximum"] += generations * (
