@@ -552,6 +552,19 @@ workflow。搜索共 10 次请求（9 executor + 1 optimizer）、6,628 tokens�
 `$0.0061752326`；requested/actual model 均为 `deepseek/deepseek-chat`，所有请求一次成功。
 重复执行两条命令后审计行数仍为 10+1，证明搜索 round 与 test sample 都没有重复调用。
 
+真实 GSM8K ADAS search→freeze→test smoke 已在 commit
+`19ab2a019d921851ab38d4cf277acfc7f2233dc2` 上完成。3 条 validation 上先评估 7 个固定
+seed（102 次 executor 调用），再执行 1 次 proposal + 2 次 reflection，并用 9 次 executor
+调用评估生成的 3 节点 architecture。搜索共 114 次请求（111 executor + 3 meta-agent）、
+54,305 tokens、费用 `$0.0292388133`。最佳为 archive index 2 的
+`Self-Refine (Reflexion)`，fitness 0.6667；生成 architecture 同分未超越。搜索 provider
+为 DeepInfra 66、Novita 46、StreamLake 2。
+
+冻结的 11 节点最佳 agent 随后在首条 GSM8K test 上执行 11 次请求、4,307 tokens、
+`$0.0022663328`，得分 1.0，provider 为 DeepInfra 3、Novita 3、StreamLake 5。完整
+search→test 共 125 次请求、58,612 tokens、`$0.0315051461`；requested/actual model 均为
+`deepseek/deepseek-chat`，所有请求一次成功。重放两条命令后审计行数仍为 114+11。
+
 单次真实 optimizer 候选生成 smoke：
 
 ```bash
