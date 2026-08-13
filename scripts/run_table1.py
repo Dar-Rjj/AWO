@@ -22,6 +22,12 @@ def main() -> int:
     parser.add_argument("--output-root", type=Path, default=Path("experiments/runs"))
     parser.add_argument("--plan-output", type=Path)
     parser.add_argument("--max-concurrency", type=int, default=1)
+    parser.add_argument(
+        "--job-concurrency",
+        type=int,
+        default=1,
+        help="parallel dataset pipelines; ordering within each dataset is preserved",
+    )
     parser.add_argument("--phase", choices=("search", "test"), action="append")
     parser.add_argument(
         "--execute",
@@ -49,7 +55,11 @@ def main() -> int:
         require_full_table_confirmation(plan, args.confirm_full_table1)
     except PermissionError as exc:
         parser.error(f"{exc}; pass --confirm-full-table1 only after pilot budget approval")
-    execute_plan(plan, phases=tuple(args.phase or ("search", "test")))
+    execute_plan(
+        plan,
+        phases=tuple(args.phase or ("search", "test")),
+        job_concurrency=args.job_concurrency,
+    )
     return 0
 
 

@@ -66,4 +66,6 @@ def test_aggregate_separates_search_and_test_cost(tmp_path: Path) -> None:
     assert report["cells"][0]["mean"] == 50.0
     assert report["totals"]["test_cost"] == 0.01
     assert report["totals"]["search_cost"] == 0.01
+    assert report["audit"]["test"]["providers"] == {"P": 1}
+    assert report["audit"]["search"]["roles"] == {"generator": 1}
     assert "Frozen test: 1 requests" in render_markdown(report)

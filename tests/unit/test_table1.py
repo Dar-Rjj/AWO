@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from awo.table1 import build_plan, require_full_table_confirmation
+from awo.table1 import build_plan, execute_plan, require_full_table_confirmation
 
 
 def _write_jsonl(path: Path, dataset: str, split: str) -> None:
@@ -75,3 +75,30 @@ def test_unbounded_plan_requires_second_confirmation() -> None:
     with pytest.raises(PermissionError, match="explicit confirmation"):
         require_full_table_confirmation(plan, False)
     require_full_table_confirmation(plan, True)
+
+
+def test_parallel_execution_preserves_order_inside_each_dataset(monkeypatch) -> None:
+    calls: list[str] = []
+
+    def fake_run(command, *, check):
+        assert check is True
+        calls.append(command[0])
+
+    monkeypatch.setattr("awo.table1.subprocess.run", fake_run)
+    jobs = []
+    for dataset in ("gsm8k", "math"):
+        for index, phase in enumerate(("test", "search", "test"), start=1):
+            jobs.append(
+                {
+                    "dataset": dataset,
+                    "phase": phase,
+                    "command": [f"{dataset}-{index}"],
+                }
+            )
+    execute_plan({"jobs": jobs}, job_concurrency=2)
+    for dataset in ("gsm8k", "math"):
+        assert [item for item in calls if item.startswith(dataset)] == [
+            f"{dataset}-1",
+            f"{dataset}-2",
+            f"{dataset}-3",
+        ]

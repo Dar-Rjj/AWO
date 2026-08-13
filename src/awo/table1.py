@@ -6,6 +6,7 @@ import json
 import subprocess
 import sys
 from collections.abc import Sequence
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
@@ -291,16 +292,32 @@ def write_plan(plan: dict[str, Any], path: Path) -> None:
     temporary.replace(path)
 
 
-def execute_plan(plan: dict[str, Any], *, phases: Sequence[str] = ("search", "test")) -> None:
+def execute_plan(
+    plan: dict[str, Any],
+    *,
+    phases: Sequence[str] = ("search", "test"),
+    job_concurrency: int = 1,
+) -> None:
     """Execute jobs in dependency order; underlying runners provide sample-level resume."""
 
     selected = set(phases)
     if not selected or selected - {"search", "test"}:
         raise ValueError("phases must contain search and/or test")
+    if job_concurrency <= 0:
+        raise ValueError("job_concurrency must be positive")
+    pipelines: dict[str, list[dict[str, Any]]] = {}
     for raw_job in plan["jobs"]:
-        if raw_job["phase"] not in selected:
-            continue
-        subprocess.run(raw_job["command"], check=True)
+        if raw_job["phase"] in selected:
+            pipelines.setdefault(raw_job["dataset"], []).append(raw_job)
+
+    def run_pipeline(jobs: Sequence[dict[str, Any]]) -> None:
+        for job in jobs:
+            subprocess.run(job["command"], check=True)
+
+    with ThreadPoolExecutor(max_workers=min(job_concurrency, len(pipelines))) as executor:
+        futures = [executor.submit(run_pipeline, jobs) for jobs in pipelines.values()]
+        for future in futures:
+            future.result()
 
 
 def require_full_table_confirmation(plan: dict[str, Any], confirmed: bool) -> None:

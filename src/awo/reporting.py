@@ -29,8 +29,8 @@ def _read_json(path: Path) -> dict[str, Any]:
     return value
 
 
-def _request_stats(path: Path) -> dict[str, Any]:
-    stats: dict[str, Any] = {
+def _empty_request_stats() -> dict[str, Any]:
+    return {
         "requests": 0,
         "tokens": 0,
         "prompt_tokens": 0,
@@ -43,6 +43,10 @@ def _request_stats(path: Path) -> dict[str, Any]:
         "actual_models": Counter(),
         "roles": Counter(),
     }
+
+
+def _request_stats(path: Path) -> dict[str, Any]:
+    stats = _empty_request_stats()
     if not path.is_file():
         return stats
     with path.open(encoding="utf-8") as handle:
@@ -75,12 +79,36 @@ def _plain(value: Any) -> Any:
     return value
 
 
+def _merge_request_stats(target: dict[str, Any], source: dict[str, Any]) -> None:
+    for key in (
+        "requests",
+        "tokens",
+        "prompt_tokens",
+        "completion_tokens",
+        "cost",
+        "latency_seconds",
+    ):
+        target[key] += source[key]
+    for key in (
+        "statuses",
+        "providers",
+        "requested_models",
+        "actual_models",
+        "roles",
+    ):
+        target[key].update(source[key])
+
+
 def aggregate_runs(runs: Path) -> dict[str, Any]:
     """Aggregate all final-test summaries and keep search costs separate."""
 
     rows: list[dict[str, Any]] = []
     totals = defaultdict(float)
     search_runs: list[dict[str, Any]] = []
+    audit_totals = {
+        "search": _empty_request_stats(),
+        "test": _empty_request_stats(),
+    }
     seen: set[Path] = set()
     for summary_path in sorted(runs.rglob("summary.json")):
         summary = _read_json(summary_path)
@@ -92,6 +120,7 @@ def aggregate_runs(runs: Path) -> dict[str, Any]:
             spec = summary["spec"]
             dataset = str(spec["dataset"])
             audit = _request_stats(run_dir / "requests.jsonl")
+            _merge_request_stats(audit_totals["test"], audit)
             for item in summary["by_run"]:
                 method = str(item["method"])
                 paper = None
@@ -130,6 +159,7 @@ def aggregate_runs(runs: Path) -> dict[str, Any]:
         elif summary.get("method") in {"aflow", "adas"} and "best_candidate" in summary:
             run_dir = summary_path.parent
             audit = _request_stats(run_dir / "requests.jsonl")
+            _merge_request_stats(audit_totals["search"], audit)
             search_runs.append(
                 {
                     "dataset": summary["dataset"],
@@ -185,6 +215,7 @@ def aggregate_runs(runs: Path) -> dict[str, Any]:
         "test_runs": rows,
         "search_runs": search_runs,
         "totals": dict(sorted(totals.items())),
+        "audit": _plain(audit_totals),
     }
 
 

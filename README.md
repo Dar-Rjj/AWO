@@ -901,7 +901,8 @@ python scripts/run_table1.py --config configs/paper/table1.yaml
 
 # 显式执行 bounded smoke/pilot
 python scripts/run_table1.py --config configs/smoke.yaml --execute --max-concurrency 2
-python scripts/run_table1.py --config configs/pilot.yaml --execute --max-concurrency 4
+python scripts/run_table1.py --config configs/pilot.yaml --execute \
+  --job-concurrency 3 --max-concurrency 4
 
 # 完整实验需要在 pilot 费用确认后同时给出两重显式授权；不要提前运行
 python scripts/run_table1.py --config configs/paper/table1.yaml \
@@ -917,9 +918,12 @@ python scripts/aggregate.py \
 bounded smoke/pilot 只需一个执行开关，无 `sample_limit` 的 full plan 还必须显式传
 `--confirm-full-table1`。每个 agentic 方法严格按 validation search →
 `best_candidate.json` 冻结 → test 的依赖顺序运行，底层账本支持逐搜索轮和逐测试样本续跑。
+`--job-concurrency` 只并行不同数据集的完整流水线，同一数据集内部依赖顺序不变；
+`--max-concurrency` 只控制单个 search evaluator 的 validation 样本并发。
 `aggregate.py` 递归读取同一配置的 run root，报告每个 dataset/method/repeat 的分数、均值、
 标准差、95% CI、论文差值、失败、调用、token、延迟和费用，并将搜索成本与冻结测试成本
-分开；不要把历史排障目录和正式 run root 混合聚合。
+分开，同时汇总 status、provider、requested/actual model 和 role；不要把历史排障目录和
+正式 run root 混合聚合。
 
 ## 13. 运行记录与可复现性
 
