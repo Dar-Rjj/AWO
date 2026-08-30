@@ -955,6 +955,16 @@ experiments/runs/<run_id>/
 
 ## 14. 预算与运行门槛
 
+### Pilot 实测状态（2026-08-30）
+
+六任务 pilot 已完成 30/30 个编排阶段、48/48 个结果单元和 960/960 个测试记录。正式实验
+共 12,378 次 `deepseek/deepseek-chat` 请求、9,151,652 tokens、$4.327683；请求状态全部
+为 `ok`，requested/actual model 完全一致。相同命令账本重放前后的请求数与组合 SHA256
+完全不变。按数据集、方法、测试规模和搜索轮数分层外推，full 中心估计约为 801,511 次
+请求、621,937,702 tokens、$291.15；结合静态逻辑请求区间的粗略费用参考为
+$147.33–$638.95。公式、假设和 provider 审计见
+[`reports/table1-pilot-budget.md`](reports/table1-pilot-budget.md)。完整 Table 1 仍保持关闭。
+
 六个手工 baseline 在 3,613 个测试样本上独立运行 3 次，预计可能超过 30 万次 LLM 请求；这还不包括：
 
 - AFlow 约 94,710 次 validation workflow 执行，每个 workflow 内可能包含多次 LLM 请求；
