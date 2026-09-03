@@ -1,0 +1,6 @@
+extends: paper/table1.yaml
+schema_version: 1
+name: math-io-gpt-4o-mini
+model_config: models/openrouter_gpt_4o_mini.yaml
+datasets: [math]
+methods: [io]

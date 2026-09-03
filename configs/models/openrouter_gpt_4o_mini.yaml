@@ -1,0 +1,10 @@
+schema_version: 1
+provider: openrouter
+model: openai/gpt-4o-mini
+base_url: https://openrouter.ai/api/v1
+temperature: 1.0
+n: 1
+timeout_seconds: 120
+max_retries: 8
+max_concurrency: 8
+max_tokens: 4096
