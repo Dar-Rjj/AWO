@@ -1,0 +1,3 @@
+extends: math_io_gpt_4o_mini.yaml
+schema_version: 1
+name: math-io-gpt-4o-mini-strict
