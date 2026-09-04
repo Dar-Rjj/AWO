@@ -17,18 +17,17 @@ from awo.experiments.runner import (
 )
 from awo.llm import OpenRouterClient
 
-STRICT_MATH_IO_PROTOCOL = "controlled/strict-output-v1"
+STRICT_MATH_IO_PROTOCOL = "controlled/strict-boxed-v2"
 STRICT_MATH_IO_SYSTEM = (
-    "Return exactly one valid JSON object and no surrounding markdown. "
-    "It must have exactly one string field named 'solution'. "
-    r'Use this exact JSON shape: {"solution":"\\boxed{<answer>}"}. '
-    "Replace <answer> with the final mathematical number or expression. "
-    "The boxed value must not contain the placeholder <answer> or instructions to "
-    "perform a calculation."
+    r"Return only the final answer in the exact form \boxed{<answer>} and nothing else. "
+    "Replace <answer> with the complete final mathematical answer. Keep every required "
+    "sign, unit, currency symbol, tuple/list/set element, matrix expression, and symbolic "
+    "variable inside the braces. Do not output JSON, Markdown fences, prose, a derivation, "
+    "or an unevaluated placeholder."
 )
 STRICT_MATH_IO_USER = (
     "{question}\n"
-    "Solve the problem internally and return only the JSON object required by the system.\n"
+    "Solve the problem internally and return only the final answer in the required form.\n"
 )
 
 

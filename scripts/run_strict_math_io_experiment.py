@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the resumable strict-output MATH IO protocol."""
+"""Run the resumable strict-boxed MATH IO protocol."""
 
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--config",
         type=Path,
-        default=Path("configs/math_io_gpt_4o_mini_strict.yaml"),
+        default=Path("configs/math_io_gpt_4o_mini_strict_boxed.yaml"),
     )
     return parser.parse_args()
 

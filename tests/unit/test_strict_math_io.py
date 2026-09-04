@@ -50,29 +50,24 @@ def example(dataset: str = "math") -> BenchmarkExample:
     )
 
 
-def test_strict_prompt_has_an_exact_json_boxed_schema_without_code_language() -> None:
+def test_strict_prompt_requires_only_the_complete_boxed_answer() -> None:
     prompt = build_strict_math_io_prompt(example())
-    assert r'{"solution":"\\boxed{<answer>}"}' in prompt.system
-    assert "final mathematical number or expression" in prompt.system
+    assert r"\boxed{<answer>}" in prompt.system
+    assert "unit, currency symbol" in prompt.system
+    assert "matrix expression" in prompt.system
+    assert "symbolic variable inside the braces" in prompt.system
+    assert "JSON" in prompt.system
     assert "Python" not in prompt.system
-    assert "program" not in prompt.system
-    assert "code" not in prompt.system
-    assert "only the JSON object" in prompt.user
+    assert "only the final answer" in prompt.user
     assert prompt.provenance == STRICT_MATH_IO_PROTOCOL
 
 
-def test_strict_prompt_allows_a_final_symbolic_expression() -> None:
-    prompt = build_strict_math_io_prompt(example())
-    assert "expression" in prompt.system
-    assert "named variables" not in prompt.system
-
-
 def test_strict_baseline_records_effective_prompt_and_protocol() -> None:
-    client = FakeClient(r'{"solution":"\\boxed{5}"}')
+    client = FakeClient(r"\boxed{5}")
     result = StrictMathIOBaseline(client).run(example())  # type: ignore[arg-type]
     assert result.prediction == r"\boxed{5}"
     assert result.prompt_sha256 == strict_prompt_sha256(example())
-    assert result.protocol == STRICT_MATH_IO_PROTOCOL
+    assert result.protocol == "controlled/strict-boxed-v2"
     assert len(client.messages) == 2
 
 
