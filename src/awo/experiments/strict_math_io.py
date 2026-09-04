@@ -22,9 +22,9 @@ STRICT_MATH_IO_SYSTEM = (
     "Return exactly one valid JSON object and no surrounding markdown. "
     "It must have exactly one string field named 'solution'. "
     r'Use this exact JSON shape: {"solution":"\\boxed{<answer>}"}. '
-    "Replace <answer> with the fully evaluated literal mathematical answer. "
-    "The boxed value must not contain named variables, placeholders, assignments, "
-    "or instructions to perform a calculation."
+    "Replace <answer> with the final mathematical number or expression. "
+    "The boxed value must not contain the placeholder <answer> or instructions to "
+    "perform a calculation."
 )
 STRICT_MATH_IO_USER = (
     "{question}\n"
