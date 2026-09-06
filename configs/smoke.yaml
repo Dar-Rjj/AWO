@@ -1,6 +1,6 @@
 schema_version: 1
-name: aflow-table1-smoke
-model_config: models/openrouter_deepseek_chat.yaml
+name: aflow-table1-smoke-gpt-4o-mini
+model_config: models/openrouter_gpt_4o_mini.yaml
 seed: 42
 test_repeats: 1
 sample_limit: 3

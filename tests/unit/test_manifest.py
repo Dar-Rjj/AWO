@@ -24,5 +24,5 @@ def test_manifest_is_secret_free(tmp_path: Path, monkeypatch) -> None:
 
     assert secret not in persisted
     assert parsed["credentials"]["openrouter_api_key_present"] is True
-    assert parsed["model"]["requested_model"] == "deepseek/deepseek-chat"
+    assert parsed["model"]["requested_model"] == "openai/gpt-4o-mini"
     assert len(parsed["config_sha256"]) == 64

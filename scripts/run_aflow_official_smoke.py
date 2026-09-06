@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run one hash-verified official-best AFlow workflow through DeepSeek Chat."""
+"""Run one hash-verified official-best AFlow workflow through GPT-4o-mini."""
 
 from __future__ import annotations
 
@@ -42,7 +42,7 @@ def main() -> int:
     parser.add_argument(
         "--config",
         type=Path,
-        default=Path("configs/models/openrouter_deepseek_chat.yaml"),
+        default=Path("configs/models/openrouter_gpt_4o_mini.yaml"),
     )
     args = parser.parse_args()
 

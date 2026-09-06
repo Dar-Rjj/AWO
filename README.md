@@ -2,10 +2,12 @@
 
 本仓库用于复现论文 [AFlow: Automating Agentic Workflow Generation](https://arxiv.org/abs/2410.10762) 的 Table 1 主实验及其 baselines。
 
-本项目采用统一模型协议：AFlow optimizer、ADAS meta-agent、workflow operators、所有 baseline、reviewer、voter 和 selector 均通过 OpenRouter 调用 `deepseek/deepseek-chat`。客户端实现参考：
+本项目默认统一模型协议：AFlow optimizer、ADAS meta-agent、workflow operators、所有 baseline、reviewer、voter 和 selector 均通过 OpenRouter 调用 `openai/gpt-4o-mini`。客户端实现参考：
 
 - `/home/rjj/RealEvo/utils/llm_client/openrouter.py`
 - `/home/rjj/RealEvo/cfg/llm_client/openrouter.yaml`
+
+> 默认模型自 2026-09-07 起切换为 `openai/gpt-4o-mini`。此前 `deepseek/deepseek-chat` 的配置、请求日志和结果报告作为历史 provenance 保留，不参与新默认 run 的缓存复用。
 
 > 当前状态：协议、工件、统一 OpenRouter 客户端、六任务 evaluator、六个手工 baseline、
 > AFlow 与 ADAS 的安全搜索/冻结/测试链路均已完成；真实 preflight 和两个 agentic
@@ -42,7 +44,7 @@
 
 ## 2. 与论文原始设置的差异
 
-论文 Table 1 使用 Claude 3.5 Sonnet 作为 AFlow/ADAS optimizer，使用 `gpt-4o-mini-2024-07-18` 作为 executor。本项目按复现要求统一替换为 OpenRouter 的 `deepseek/deepseek-chat`。
+论文 Table 1 使用 Claude 3.5 Sonnet 作为 AFlow/ADAS optimizer，使用 `gpt-4o-mini-2024-07-18` 作为 executor。本项目自 2026-09-07 起统一使用 OpenRouter 的 `openai/gpt-4o-mini`；optimizer 仍与论文的 Claude 3.5 Sonnet 设置不同。
 
 因此本项目属于：
 
@@ -50,9 +52,9 @@
 - 同模型条件下的公平受控比较；
 - 不是论文原始模型组合的逐输出 exact reproduction。
 
-最终报告必须同时列出“论文配置”和“本项目配置”，不能将 DeepSeek Chat 的结果标记为原论文模型复现结果。
+最终报告必须同时列出“论文配置”和“本项目配置”，不能将统一 GPT-4o-mini optimizer 的结果标记为原论文模型组合的 exact reproduction。
 
-OpenRouter 的 `deepseek/deepseek-chat` 是模型别名，后端版本或路由可能变化。每个 run 必须记录：
+OpenRouter 的 `openai/gpt-4o-mini` 可能被路由到不同 provider。每个 run 必须记录：
 
 - 请求模型名及 API 返回的实际模型名；
 - OpenRouter 路由/provider 信息（如果响应提供）；
@@ -63,11 +65,11 @@ OpenRouter 的 `deepseek/deepseek-chat` 是模型别名，后端版本或路由�
 
 ### 3.1 默认配置
 
-计划配置文件：`configs/models/openrouter_deepseek_chat.yaml`。
+计划配置文件：`configs/models/openrouter_gpt_4o_mini.yaml`。
 
 ```yaml
 provider: openrouter
-model: deepseek/deepseek-chat
+model: openai/gpt-4o-mini
 base_url: https://openrouter.ai/api/v1
 temperature: 1.0
 n: 1
@@ -75,7 +77,7 @@ timeout_seconds: 120
 max_retries: 8
 ```
 
-选择 `temperature: 1.0` 的原因：RealEvo 的参考配置使用该值，论文涉及 DeepSeek 的实验也采用温度 1。所有 headline 方法使用同一个温度，避免方法间模型参数不一致。温度 0 只作为额外敏感性实验，不混入主表。
+切换默认模型时保留已注册的 `temperature: 1.0`，使所有 headline 方法继续使用一致采样参数；温度变化属于独立敏感性实验，不与模型切换混在主表。
 
 ### 3.2 凭据
 
@@ -196,7 +198,7 @@ API key 不得写入配置、日志、响应缓存或 Git。仓库只提交 `.en
 
 - **IO**：一次任务特定生成，输出满足各 evaluator 的格式约定。
 - **CoT**：一次 step-by-step 生成，推理文本和最终答案分别保存。
-- **CoT-SC**：生成 5 个独立候选，再请求 1 次 DeepSeek Chat selector；记录候选归一化答案和多样性。
+- **CoT-SC**：生成 5 个独立候选，再请求 1 次 GPT-4o-mini selector；记录候选归一化答案和多样性。
 - **MedPrompt**：生成 3 个候选，打乱候选顺序后投票 5 次；固定 tie-break 和 shuffle seed。
 - **MultiPersona**：3 个固定任务角色各讨论 2 轮，再进行一次 synthesis。
 - **Self-Refine**：初始生成后最多执行 3 轮 review → revise；保存每轮反馈、修改和停止原因。
@@ -232,7 +234,7 @@ API key 不得写入配置、日志、响应缓存或 Git。仓库只提交 `.en
 ### 7.2 搜索协议
 
 - 初始 workflow：论文 blank/template workflow；
-- optimizer 和 workflow executor 均使用 `deepseek/deepseek-chat`；
+- optimizer 和 workflow executor 均使用 `openai/gpt-4o-mini`；
 - 最大搜索轮数：20；
 - 每个新 workflow 在 validation 上重复评估 5 次；
 - 候选池 top-k：3；
@@ -257,14 +259,14 @@ AFlow 混合选择参数存在三种公开值：
 1. 下载官方 AFlow 搜索轨迹和最佳 workflow。
 2. 通过兼容层修复旧 `examples.aflow`/`metagpt.ext.aflow` 导入路径。
 3. 使用统一 evaluator 重算归档分数。
-4. 使用 DeepSeek Chat 重新执行最佳 workflow。
+4. 使用 GPT-4o-mini 重新执行最佳 workflow。
 5. 将“归档答案重评分”和“新模型重新推理”分开报告。
 
 ## 8. ADAS 复现
 
 参考 [ADAS 官方仓库](https://github.com/ShengranHu/ADAS) 的 Meta Agent Search。
 
-- meta-agent 和候选 agent executor 均使用 `deepseek/deepseek-chat`；
+- meta-agent 和候选 agent executor 均使用 `openai/gpt-4o-mini`；
 - 搜索 30 轮；
 - 使用与 AFlow 相同的 validation/test split 和 evaluator；
 - 为六个数据集实现统一 adapter；
@@ -317,7 +319,8 @@ python scripts/sandbox_check.py
 ```text
 AWO/
 ├── configs/
-│   ├── models/openrouter_deepseek_chat.yaml
+│   ├── models/openrouter_gpt_4o_mini.yaml      # 1.1+ 默认
+│   ├── models/openrouter_deepseek_chat.yaml    # 历史/显式实验
 │   ├── paper/table1.yaml
 │   ├── smoke.yaml
 │   └── pilot.yaml
@@ -385,7 +388,7 @@ AWO/
 3. 实现 `preflight`：发送最小请求并验证模型、响应结构和 token usage。
 4. 将 optimizer、executor 和 baselines 注入同一个 client factory。
 
-验收：所有角色的请求日志均显示 `deepseek/deepseek-chat`，且失败不会无限重试。
+验收：所有角色的请求日志均显示 `openai/gpt-4o-mini`，且失败不会无限重试。
 
 完成记录（2026-08-09）：离线检查、15 项单元测试、lint 和 Python 3.9 编译通过；
 一次最小真实请求由 OpenRouter 路由至 `deepseek/deepseek-chat`（provider `Novita`），
@@ -837,7 +840,7 @@ python -m pip install --require-hashes -r requirements.lock
 python -m pip install --no-deps -e .
 
 # 模型和环境预检
-python scripts/preflight.py --config configs/models/openrouter_deepseek_chat.yaml
+python scripts/preflight.py --config configs/models/openrouter_gpt_4o_mini.yaml
 
 # 下载并校验数据/工件
 python scripts/download_data.py
@@ -991,7 +994,7 @@ budget。完整 Table 1 在获得该实际费用报告及用户确认前保持�
 
 - 六个数据集的文件数量、split 和 SHA256 可验证；
 - 统一 evaluator 通过归档结果和边界样例测试；
-- 所有模型调用均走 OpenRouter `deepseek/deepseek-chat`；
+- 所有新默认模型调用均走 OpenRouter `openai/gpt-4o-mini`；
 - 所有方法使用相同模型配置和错误计分规则；
 - validation/test 无泄漏；
 - 生成代码只能在安全沙箱运行；

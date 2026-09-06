@@ -7,16 +7,24 @@ from awo.config import ConfigError, config_fingerprint, load_config
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
-def test_table1_config_resolves_model() -> None:
-    config = load_config(REPO_ROOT / "configs/paper/table1.yaml")
+def test_active_configs_resolve_gpt_4o_mini() -> None:
+    expected_names = {
+        "configs/smoke.yaml": "aflow-table1-smoke-gpt-4o-mini",
+        "configs/pilot.yaml": "aflow-table1-pilot-gpt-4o-mini",
+        "configs/paper/table1.yaml": "aflow-table1-gpt-4o-mini",
+    }
 
-    assert config["name"] == "aflow-table1-deepseek-chat"
-    assert config["model"]["provider"] == "openrouter"
-    assert config["model"]["model"] == "deepseek/deepseek-chat"
-    assert config["model"]["temperature"] == 1.0
-    assert config["test_repeats"] == 3
-    assert len(config["datasets"]) == 6
-    assert len(config["methods"]) == 8
+    for relative_path, expected_name in expected_names.items():
+        config = load_config(REPO_ROOT / relative_path)
+        assert config["name"] == expected_name
+        assert config["model"]["provider"] == "openrouter"
+        assert config["model"]["model"] == "openai/gpt-4o-mini"
+        assert config["model"]["temperature"] == 1.0
+
+    table1 = load_config(REPO_ROOT / "configs/paper/table1.yaml")
+    assert table1["test_repeats"] == 3
+    assert len(table1["datasets"]) == 6
+    assert len(table1["methods"]) == 8
 
 
 def test_fingerprint_excludes_runtime_path() -> None:

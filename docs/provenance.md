@@ -252,7 +252,7 @@ HumanEval 工件缺少的 5 个样本不使用 hidden test 回填，边界见 A-
 每轮保存 `candidate.json`、`evaluations.jsonl`、`record.json` 和全局 `state.json`，
 写入采用临时文件原子替换。恢复时必须通过 dataset 与完整搜索配置的 SHA256 校验，已完成
 round 不会重复调用。optimizer、executor 都使用同一 OpenRouter
-`deepseek/deepseek-chat` 客户端和请求审计器。
+`openai/gpt-4o-mini` 客户端和请求审计器。
 
 ## 8. 来源优先级
 

@@ -11,13 +11,13 @@
 
 - 状态：`resolved-for-primary`
 - 论文：Claude 3.5 Sonnet optimizer + GPT-4o-mini executor。
-- 本项目：所有角色统一为 OpenRouter `deepseek/deepseek-chat`，temperature 1.0。
+- 本项目自 2026-09-07 起：所有角色统一为 OpenRouter `openai/gpt-4o-mini`，temperature 1.0；此前 DeepSeek 运行保持历史标注。
 - 决策：报告为统一模型协议复现，禁止标记为论文模型 exact reproduction。
 
 ## A-002：OpenRouter 模型别名漂移
 
 - 状态：`open`
-- 问题：`deepseek/deepseek-chat` 可能随时间解析到不同后端版本/provider。
+- 问题：`openai/gpt-4o-mini` 可能随时间路由到不同 provider；历史 `deepseek/deepseek-chat` 也存在同类漂移。
 - 决策：每次请求记录请求模型、返回模型、路由 provider 和时间；preflight 结果写入 run manifest。不同实际模型不得聚合为同一次实验。
 - 2026-08-09 证据：preflight 和 IO smoke 路由到 `Novita`，随后 CoT smoke 路由到
   `DeepInfra`；三者 requested/actual model 字段均为 `deepseek/deepseek-chat`。最终报告需列出
@@ -88,7 +88,7 @@
 - 状态：`resolved-for-primary`
 - 表格“5-shot”实际指生成 5 个 answers，不是 5 个 few-shot exemplars。
 - 历史实现使用 LLM selector，而非规范化答案的确定性多数票。
-- 决策：5 次候选 + 1 次 DeepSeek selector，并保存候选多样性。
+- 决策：5 次候选 + 1 次当前统一模型 selector，并保存候选多样性。
 
 ## A-012：ADAS 六任务适配
 

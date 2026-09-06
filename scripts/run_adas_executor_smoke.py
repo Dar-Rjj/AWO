@@ -29,7 +29,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--config",
         type=Path,
-        default=Path("configs/models/openrouter_deepseek_chat.yaml"),
+        default=Path("configs/models/openrouter_gpt_4o_mini.yaml"),
     )
     return parser.parse_args()
 
