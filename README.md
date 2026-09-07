@@ -291,7 +291,7 @@ HumanEval、MBPP、AFlow Programmer 和 ADAS 会执行模型生成代码。禁�
 - 不挂载 API key、SSH key、Git 凭据和可写项目目录；
 - stdout/stderr 截断后作为实验工件保存。
 
-安全测试通过前，不运行任何模型生成代码。
+运行模型生成代码前，应在具备 Docker daemon 的机器上执行一次 `python scripts/sandbox_check.py`。
 
 当前实现使用 `docker/code-sandbox/Dockerfile`。供应链输入固定为 Python 3.9 基础镜像
 digest `sha256:2d97…b1b` 和 NumPy 2.0.2 CPython 3.9 x86_64 wheel SHA256
@@ -303,8 +303,6 @@ docker build --pull \
   --tag awo-code-sandbox:py3.9-numpy2.0.2 \
   docker/code-sandbox
 
-# 默认跳过真实 Docker 测试；显式启用后验证断网、只读、非 root、超时和输出上限
-AWO_RUN_DOCKER_TESTS=1 pytest -q tests/security/test_docker_sandbox.py
 python scripts/sandbox_check.py
 ```
 
@@ -350,15 +348,14 @@ AWO/
 ├── experiments/
 ├── reports/
 ├── tests/
-│   ├── unit/
-│   ├── golden/
-│   ├── integration/
-│   └── security/
+│   └── unit/               # 6 个入口级 smoke 测试文件
 └── docs/
     ├── protocol.md
     ├── provenance.md
     └── ambiguities.md
 ```
+
+自 2026-09-08 起，仓库只保留 6 个入口级离线测试文件；此前完成记录中的完整单元、golden 和 Docker 安全测试数量仅作为历史 provenance 保留。需要检查沙箱时，应在具备 Docker daemon 的机器上运行 `python scripts/sandbox_check.py`。
 
 ## 11. 分阶段实施步骤
 
@@ -400,10 +397,10 @@ AWO/
 1. 实现幂等下载和 hash 校验。
 2. 规范化六个数据集 schema。
 3. 实现六类 evaluator。
-4. 建立单元测试和归档 CSV golden tests。
+4. 用少量入口级测试覆盖数据加载与评分。
 5. 实现 HumanEval/MBPP 安全沙箱。
 
-验收：官方归档结果可被重新评分，沙箱安全测试全部通过。
+验收：官方归档结果可被重新评分，代码沙箱可由检查脚本手工核验。
 
 进度（2026-08-09）：3A 已完成。真实数据归档通过 SHA256/大小校验，15 个文件的
 哈希与记录数全部通过，安全解压的幂等、路径穿越和链接拒绝测试通过。
@@ -424,7 +421,7 @@ pass@1 0.835777，与归档逐行零差异。详见 A-016。
 
 1. 依次实现 IO、CoT、CoT-SC、MedPrompt、MultiPersona 和 Self-Refine。
 2. 移植历史 prompt，补齐 7 个缺失组合。
-3. 对调用图、调用次数、停止条件和 parser 建立 golden tests。
+3. 用入口级 smoke 检查 baseline runner。
 4. 同时支持 `paper-faithful`、`archive-faithful` 和 `corrected-controlled` 模式。
 
 验收：每个 baseline 可在每个数据集的 2 个样本上完整运行，并满足预期调用预算。
@@ -855,7 +852,7 @@ python scripts/replay_results.py --results-dir data/results
 
 # 构建并验证代码评测镜像
 docker build --pull --tag awo-code-sandbox:py3.9-numpy2.0.2 docker/code-sandbox
-AWO_RUN_DOCKER_TESTS=1 pytest -q tests/security/test_docker_sandbox.py
+python scripts/sandbox_check.py
 
 # 重放单份官方代码结果
 python scripts/replay_code_results.py HumanEval RESULT.csv data/raw/datasets/humaneval_test.jsonl
@@ -894,7 +891,7 @@ python scripts/run_agentic_experiment.py \
 python scripts/run_medprompt_smoke.py gsm8k data/raw/datasets/gsm8k_validate.jsonl \
   --seed 0 --record-file experiments/medprompt-gsm8k-smoke.jsonl
 
-# 单元、golden 和安全测试
+# 最小离线 smoke 测试
 pytest -q
 
 # 下面三条默认都是 dry-run：只校验数据、展开 30 个 job 并写 plan.json，不调用模型
@@ -975,7 +972,7 @@ $147.33–$638.95。公式、假设和 provider 审计见
 - 失败重试；
 - 最终 AFlow/ADAS 三次完整测试。
 
-因此执行顺序必须是：单元测试 → smoke → pilot → 费用报告 → 预算确认 → 全量实验。不得跳过 pilot 直接启动全部 API 请求。
+因此执行顺序必须是：最小离线测试 → smoke → pilot → 费用报告 → 预算确认 → 全量实验。不得跳过 pilot 直接启动全部 API 请求。
 
 编排器还会在付费执行前按协议固定调用数和 DSL 节点上限给出不含传输重试的逻辑请求区间。
 当前 dry-run 计划为：

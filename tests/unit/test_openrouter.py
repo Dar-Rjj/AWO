@@ -36,7 +36,7 @@ class FakeCompletions:
 def fake_response(content: str = "AWO_PREFLIGHT_OK"):
     return SimpleNamespace(
         id="response-1",
-        model="deepseek/deepseek-chat",
+        model="openai/gpt-4o-mini",
         model_extra={"provider": "fake-provider"},
         choices=[
             SimpleNamespace(
@@ -54,7 +54,7 @@ def fake_response(content: str = "AWO_PREFLIGHT_OK"):
 
 def settings(**overrides):
     values = {
-        "model": "deepseek/deepseek-chat",
+        "model": "openai/gpt-4o-mini",
         "api_key": "test-secret",
         "max_retries": 2,
     }
@@ -84,7 +84,7 @@ def test_success_records_auditable_secret_free_request(tmp_path) -> None:
     )
 
     assert result.content == "AWO_PREFLIGHT_OK"
-    assert result.actual_model == "deepseek/deepseek-chat"
+    assert result.actual_model == "openai/gpt-4o-mini"
     assert result.provider == "fake-provider"
     assert result.usage.total_tokens == 5
     assert completions.calls[0]["n"] == 1
@@ -150,7 +150,7 @@ def test_settings_require_environment_key(monkeypatch) -> None:
     monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
 
     with pytest.raises(LLMConfigurationError, match="OPENROUTER_API_KEY"):
-        OpenRouterSettings.from_mapping({"model": "deepseek/deepseek-chat"})
+        OpenRouterSettings.from_mapping({"model": "openai/gpt-4o-mini"})
 
 
 def test_settings_accept_direct_and_embedded_model_config() -> None:

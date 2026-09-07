@@ -22,8 +22,8 @@ class FakeClient:
         return ChatResult(
             request_id=str(len(self.calls)),
             response_id=str(len(self.calls)),
-            requested_model="deepseek/deepseek-chat",
-            actual_model="deepseek/deepseek-chat",
+            requested_model="openai/gpt-4o-mini",
+            actual_model="openai/gpt-4o-mini",
             provider="test",
             content='{"answer":"36"}',
             finish_reason="stop",

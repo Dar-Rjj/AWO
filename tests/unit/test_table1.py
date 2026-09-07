@@ -28,7 +28,7 @@ def test_plan_orders_search_before_frozen_test_and_is_bounded(tmp_path: Path) ->
             {
                 "schema_version": 1,
                 "provider": "openrouter",
-                "model": "deepseek/deepseek-chat",
+                "model": "openai/gpt-4o-mini",
                 "base_url": "https://openrouter.ai/api/v1",
             }
         ),

@@ -29,7 +29,6 @@ dev = [
   "pip==25.2",
   "pip-tools==7.5.0",
   "pytest==8.4.1",
-  "pytest-cov==6.2.1",
   "ruff==0.12.4",
   "setuptools==80.9.0",
   "wheel==0.45.1",
