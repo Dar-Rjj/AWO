@@ -263,6 +263,16 @@ python scripts/run_aflow_original.py
 `ScEnsemble` 的原生 Python workflow。全程共 6 次 OpenRouter 请求、2,994 tokens，费用
 `-e.00074835`。产物位于忽略目录 `experiments/runs/aflow-original-smoke/`。
 
+完整原版 HumanEval 搜索在 round 8 触发官方收敛判定，最佳 round 2 的 5 次 validation
+分数为 `0.848485 / 0.909091 / 0.848485 / 0.848485 / 0.878788`，均值
+`0.866667`。round 3--8 均因固定 commit 的 HumanEval `Test` 模板读取 MBPP 公测而为 0；
+未作本地修复。搜索共 1,822 次请求、616,513 tokens、费用 `$0.18856950`，API 错误 0。
+
+按原版 `test_n=1` 冻结 round 2 后，在 131 条 HumanEval test 上得到 116 pass / 15 fail，
+pass@1 为 `0.885496`。测试共 262 次请求、107,098 tokens、费用 `$0.03025095`，执行错误
+和 API 错误均为 0。搜索与测试合计 2,084 次请求、723,611 tokens、费用 `$0.21882045`。
+完整产物位于 `experiments/runs/aflow-humaneval-gpt-4o-mini-original/`。
+
 ### 7.3 论文参数冲突
 
 AFlow 混合选择参数存在三种公开值：
