@@ -22,4 +22,3 @@ def write_json_file(json_file: str, data: list, encoding: str = None, indent: in
 
     with open(json_file, "w", encoding=encoding) as fout:
         json.dump(data, fout, ensure_ascii=False, indent=indent, default=to_jsonable_python)
-
