@@ -9,7 +9,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from awo.aflow.official import OfficialCandidateGenerator, OfficialSandboxRuntime
+from awo.aflow.official import OfficialSandboxRuntime
 from awo.aflow.official_search import OfficialAFlowSearch, OfficialSearchConfig
 from awo.benchmarks.data import load_and_normalize
 from awo.config import load_config
@@ -30,7 +30,9 @@ def parse_args() -> argparse.Namespace:
         "output_dir",
         type=Path,
         nargs="?",
-        default=Path("experiments/runs/aflow-humaneval-gpt-4o-mini-original/search"),
+        default=Path(
+            "experiments/runs/aflow-humaneval-gpt-4o-mini-upstream-optimizer/search"
+        ),
     )
     parser.add_argument(
         "--humaneval-public-tests",
@@ -114,7 +116,7 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
         ),
     )
     summary = await OfficialAFlowSearch(
-        generator=OfficialCandidateGenerator(client),
+        client=client,
         runtime=runtime,
         examples=examples,
         output_dir=args.output_dir,
