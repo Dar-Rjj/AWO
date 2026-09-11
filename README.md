@@ -233,14 +233,30 @@ API key 不得写入配置、日志、响应缓存或 Git。仓库只提交 `.en
 
 ### 7.2 搜索协议
 
-- 初始 workflow：论文 blank/template workflow；
-- optimizer 和 workflow executor 均使用 `openai/gpt-4o-mini`；
-- 最大搜索轮数：20；
-- 每个新 workflow 在 validation 上重复评估 5 次；
-- 候选池 top-k：3；
-- 连续 5 轮未改善时允许提前停止；
-- 保存每轮 workflow 代码、prompt、父节点、修改说明、错误反馈、validation 分数和选择概率；
-- 选择最终 workflow 后冻结代码，再执行 3 次独立 test run。
+HumanEval 的新主路径直接使用 `third_party/aflow_paper` 中固定 commit
+`289d5544cfb5698799b207b931a392aadc9e9c1a` 的 Python workflow 表示和原版 XML
+optimizer prompt，不再生成或解释 `declarative_v1` JSON。
+
+- 初始 workflow、operator 描述、optimizer prompt 和 `graph.py` 模板均取自固定源码；
+- optimizer 与 workflow executor 均通过 OpenRouter 使用 `openai/gpt-4o-mini`；
+- 原版 `sample=4`，混合选择参数 `alpha=0.2, lambda=0.3`；
+- `max_rounds=20` 表示初始 round 1 之后最多生成 20 个新 workflow；
+- 每个 workflow 在 33 条 HumanEval validation 上独立执行 5 次；
+- 使用原版 top-3、连续 5 次不变化的收敛判定；
+- 每轮保存原始 `graph.py`、`prompt.py`、父节点、修改说明、错误日志和分数。
+
+生成的 `graph.py` 在独立无网络沙箱内导入和执行。算子需要模型时，沙箱返回完整 user
+prompt，宿主调用 OpenRouter 后把响应加入 transcript 并重放；API key、网络和项目目录都不
+进入沙箱。运行命令：
+
+```bash
+set -a
+source /root/.env
+set +a
+python scripts/run_aflow_original.py
+```
+
+旧 `run_search.py aflow ...` 是先前的 JSON DSL 兼容实现，不用于这次原版 HumanEval 结果。
 
 ### 7.3 论文参数冲突
 
@@ -248,9 +264,10 @@ AFlow 混合选择参数存在三种公开值：
 
 - 论文正文：`alpha=0.4, lambda=0.2`；
 - 论文附录：`alpha=0.2, lambda=0.4`；
-- 当前官方代码：`alpha=0.2, lambda=0.3`。
+- 固定官方源码：`alpha=0.2, lambda=0.3`。
 
-主实验使用论文正文值，另外两组作为敏感性实验。三组结果分别保存，不从中挑选最好的一组作为主结果。
+按当前“遵循原版源码”的要求，本次 HumanEval 搜索采用固定源码值 `0.2/0.3`。论文正文和
+附录参数只保留为后续敏感性实验，不混入本次轨迹。
 
 ### 7.4 工件重放
 

@@ -81,6 +81,15 @@ class OfficialPythonCandidate:
         )
 
 
+def render_graph_source(candidate: OfficialPythonCandidate, round_number: int) -> str:
+    values = _literal_assignments("scripts/prompts/optimize_prompt.py")
+    return values["WORKFLOW_TEMPLATE"].format(
+        graph=candidate.graph,
+        round=round_number,
+        dataset="HumanEval",
+    )
+
+
 def initial_humaneval_candidate() -> OfficialPythonCandidate:
     verify_snapshot()
     graph_file = _source("workspace/HumanEval/workflows/round_1/graph.py")
@@ -246,6 +255,8 @@ for package in [
     "workspace.HumanEval.workflows.round_1",
 ]:
     ensure_package(package)
+
+ensure_package(f"workspace.HumanEval.workflows.round_{payload['round']}")
 
 
 tree_sitter = types.ModuleType("tree_sitter")
@@ -539,12 +550,7 @@ class OfficialSandboxRuntime:
         entry_point: str,
         transcript: list[dict[str, Any]],
     ) -> str:
-        values = _literal_assignments("scripts/prompts/optimize_prompt.py")
-        graph_source = values["WORKFLOW_TEMPLATE"].format(
-            graph=candidate.graph,
-            round=round_number,
-            dataset="HumanEval",
-        )
+        graph_source = render_graph_source(candidate, round_number)
         payload = {
             "round": round_number,
             "problem": problem,

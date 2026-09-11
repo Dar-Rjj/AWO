@@ -1,0 +1,13 @@
+extends: ../paper/table1.yaml
+schema_version: 1
+name: aflow-humaneval-original-python-gpt-4o-mini
+datasets: [humaneval]
+methods: [aflow]
+aflow:
+  upstream_commit: 289d5544cfb5698799b207b931a392aadc9e9c1a
+  workflow_language: upstream_python
+  sample: 4
+  max_rounds: 20
+  validation_rounds: 5
+  check_convergence: true
+  max_concurrency: 8

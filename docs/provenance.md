@@ -210,60 +210,21 @@ AFlow `data/download_data.py` 在固定提交中给出三个 Google Drive 工件
 - 本机验证 Image ID：
   `sha256:3ac37a78e2e380ddb53b9c0ca9b672ffde319605113d97620fb92b38ff022861`。
 
-## 7.1 AFlow operator runtime
+## 7.1 AFlow 原版 Python 搜索与沙箱适配
 
-论文同期 AFlow commit 的六任务模板需要 `Custom`、`AnswerGenerate`、`CustomCodeGenerate`、
-`ScEnsemble`、`Programmer` 和 `Test`。本项目保留其异步调用接口、返回字段和 user prompt，
-但所有 LLM 请求经统一审计客户端；原 XML formatter 以等价显式 JSON system schema 替代。
+HumanEval 原版搜索使用 `third_party/aflow_paper/` 中固定 commit 的 optimizer、prompt、
+HumanEval 初始 graph 和 operator 源码。该目录中的上游文件保持字节不变；本地兼容层位于
+`src/awo/aflow/official.py` 和 `src/awo/aflow/official_search.py`。
 
-上游 `Programmer`、`Test` 使用宿主 `exec`/进程池执行生成代码。本项目禁止该路径：两者仅能
-在提供已验证 `DockerSandbox` 时构造，代码在无网络、只读、非 root、资源受限容器执行。
-`CustomCodeGenerate` 显式加入 entry point 约束，修复上游 formatter 未消费 function_name
-参数的问题。上述变化属于安全/格式兼容层，不改变 workflow 的 LLM operator 拓扑。
+优化器继续接收官方拼接后的单条 user message，并按官方 `XmlFormatter` 的
+`modification/graph/prompt` 标签解析。父节点选择、experience 去重、`sample=4`、
+`alpha=0.2`、`lambda=0.3`、5 次验证及收敛判定均跟随固定源码。唯一传输替换是把官方
+`AsyncOpenAI` 接到统一 OpenRouter 客户端。
 
-## 7.2 官方最佳 workflow 兼容
+模型生成的 `graph.py` 和 `prompt.py` 不在 AWO 主进程导入。它们连同固定 operator 源码在
+无网络沙箱中执行；LLM 调用通过 transcript relay 交回宿主。最终 HumanEval 测试代码也由
+同一沙箱评分。此适配改变隔离与 API 传输位置，不改 optimizer prompt 或候选 Python。
 
-官方 results 工件的 `graphs_test` 指向：DROP round 3、GSM8K round 10、HotpotQA round 3、
-HumanEval round 5、MATH round 5、MBPP round 14。六份 graph/prompt 的 SHA256 固定在
-`configs/aflow/official_best.yaml`。
-
-归档 graph 同时使用 `examples.aflow...` 和 `metagpt.ext.aflow...` 旧导入路径，且动态导入会
-执行归档 Python。本项目不执行 graph.py：验证 results 工件 marker、graph hash 和 prompt
-hash 后，由 `OfficialBestWorkflow` 原生重建已审计的六个固定拓扑。prompt.py 也不 import，
-仅通过 AST 接受大写名称到字符串字面量的直接赋值；任何 import、函数调用或表达式均拒绝。
-代码 workflow 使用冻结的 `humaneval_public_test.jsonl`/`mbpp_public_test.jsonl`，公开测试仍
-只在 Docker 沙箱执行。HumanEval 按工件中的 `problem_id` 关联；MBPP 工件没有 task id，
-因此先对完整 test/validation split 逐项验证 entry-point 顺序，再按 sample id 冻结映射。
-HumanEval 工件缺少的 5 个样本不使用 hidden test 回填，边界见 A-027。
-
-## 7.3 AFlow 搜索协议
-
-初始单 agent workflow 单独做 5 次 validation，随后最多生成 20 轮；因此磁盘 round 编号
-为初始 round 1，加生成 round 2–21。每轮候选也固定做 5 次 validation，失败 repeat 记 0
-且保留在均值分母中。父候选池始终包含初始 workflow，再加入分数最高的 3 个生成 workflow。
-
-父候选概率复现固定提交中的计算：
-
-`p = lambda * Uniform + (1 - lambda) * softmax(alpha * (100 * score))`
-
-主协议固定 `alpha=0.4`、`lambda=0.2`、seed 42；连续 5 个生成 round 未严格改善全局最佳
-分数即早停。候选生成最多重试 3 次，非法 DSL 或与既有 graph+prompt 内容重复均触发重试。
-
-每轮保存 `candidate.json`、`evaluations.jsonl`、`record.json` 和全局 `state.json`，
-写入采用临时文件原子替换。恢复时必须通过 dataset 与完整搜索配置的 SHA256 校验，已完成
-round 不会重复调用。optimizer、executor 都使用同一 OpenRouter
-`openai/gpt-4o-mini` 客户端和请求审计器。
-
-## 8. 来源优先级
-
-冲突时按以下优先级处理，并保留敏感性配置：
-
-1. 论文正文明确值；
-2. 论文附录；
-3. 论文同期公开代码；
-4. 官方发布数据和结果工件；
-5. 当前独立仓库；
-6. 原始 baseline/ADAS 论文及仓库；
-7. 本项目的最小推断。
-
-任何第 7 类内容都不能标记为 exact。
+固定 commit 的 HumanEval `Test` 模板原文包含 `dataset="MBPP"`，并在反思分支读取
+`response["reflection_and_solution"]`；后者直到上游 `b6e0bad` 才修复。原版路径不静默修复
+这些已知上游行为，失败会写入对应 round 的日志。
