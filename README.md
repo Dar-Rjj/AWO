@@ -271,10 +271,16 @@ python scripts/run_aflow_original.py
 `ScEnsemble` 的原生 Python workflow。全程共 6 次 OpenRouter 请求、2,994 tokens，费用
 `$0.00074835`。产物位于忽略目录 `experiments/runs/aflow-original-smoke/`。
 
-下列结果由此前的“行为兼容搜索层”产生，保留作历史记录，不冒充直接调用官方
-`Optimizer` 后的新结果。切换后的默认输出目录是
-`experiments/runs/aflow-humaneval-gpt-4o-mini-upstream-optimizer/`，需要重新执行后才
-能形成新的正式结果。
+直接调用官方 `Optimizer` 的完整 HumanEval 搜索在 round 13 触发收敛，最佳 round 3
+的 5 次 validation 分数为
+`0.848485 / 0.878788 / 0.878788 / 0.878788 / 0.848485`，均值
+`0.866667`。round 8 均值为 `0.854545`，其余生成轮次为 0：round 2 存在返回值类型
+错误，round 9 引用了未定义函数，round 4--7 和 round 10--13 主要因官方 `Test` 路径的
+公开测试读取问题失败。搜索共 8,922 次 OpenRouter 请求，3,184,554 tokens，实际费用
+`$0.98577240`；其中 optimizer 12 次、executor 8,910 次，API 错误 0。正式产物位于
+`experiments/runs/aflow-humaneval-gpt-4o-mini-upstream-optimizer/search/`。
+
+下列结果由此前的“行为兼容搜索层”产生，仅保留作历史对照。
 
 历史完整 HumanEval 搜索在 round 8 触发收敛判定，最佳 round 2 的 5 次 validation
 分数为 `0.848485 / 0.909091 / 0.848485 / 0.848485 / 0.878788`，均值
