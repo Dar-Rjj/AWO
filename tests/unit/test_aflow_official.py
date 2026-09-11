@@ -44,6 +44,20 @@ class RelaySandbox:
         return SandboxResult("passed", 0, stdout, "", 0.01, "test-sandbox")
 
 
+class ImportSandbox:
+    config = SandboxConfig()
+
+    def run(self, source: str) -> SandboxResult:
+        assert "'validate_only': True" in source
+        stdout = (
+            RESULT_MARKER
+            + '{"prediction":"","reported_cost":0.0}'
+            + "\n"
+            + PASS_MARKER
+        )
+        return SandboxResult("passed", 0, stdout, "", 0.01, "test-sandbox")
+
+
 def test_official_optimizer_uses_upstream_xml_contract() -> None:
     candidate = initial_humaneval_candidate()
     prompt = format_optimizer_prompt(
@@ -80,3 +94,8 @@ def test_official_workflow_llm_call_is_relayed_out_of_sandbox() -> None:
     assert client.prompts == ["solve"]
     assert all("class Workflow" in source for source in sandbox.sources)
     assert "OPENROUTER_API_KEY" not in "".join(sandbox.sources)
+
+
+def test_official_workflow_import_is_checked_in_sandbox() -> None:
+    runtime = OfficialSandboxRuntime(FakeClient(), ImportSandbox(), humaneval_public_tests={})
+    runtime.validate(initial_humaneval_candidate(), round_number=1)

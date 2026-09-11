@@ -459,6 +459,8 @@ graph_module = types.ModuleType("generated_graph")
 
 async def execute_workflow():
     exec(compile(payload["graph_source"], "graph.py", "exec"), graph_module.__dict__)
+    if payload.get("validate_only"):
+        return {"prediction": "", "reported_cost": 0.0}
     workflow = graph_module.Workflow(name="HumanEval", llm_config={}, dataset="HumanEval")
     value = await workflow(payload["problem"], entry_point=payload["entry_point"])
     prediction, reported_cost = value
@@ -549,6 +551,7 @@ class OfficialSandboxRuntime:
         problem: str,
         entry_point: str,
         transcript: list[dict[str, Any]],
+        validate_only: bool = False,
     ) -> str:
         graph_source = render_graph_source(candidate, round_number)
         payload = {
@@ -563,8 +566,40 @@ class OfficialSandboxRuntime:
             "public_tests": self.public_tests,
             "hardcoded_tests": self._hardcoded_tests(),
             "transcript": transcript,
+            "validate_only": validate_only,
         }
         return "PAYLOAD = " + repr(payload) + "\n" + textwrap.dedent(_WORKER)
+
+    def validate(
+        self,
+        candidate: OfficialPythonCandidate,
+        *,
+        round_number: int,
+    ) -> None:
+        """Import a generated graph inside the sandbox without running its workflow."""
+
+        source = self._worker_source(
+            candidate,
+            round_number=round_number,
+            problem="",
+            entry_point="",
+            transcript=[],
+            validate_only=True,
+        )
+        result = self.sandbox.run(source)
+        if not result.passed:
+            raise RuntimeError(
+                f"generated workflow sandbox import failed: {result.status}: "
+                f"{result.stderr[-1000:]}"
+            )
+        marker, payload = _marker_payload(result.stdout)
+        if marker == ERROR_MARKER:
+            raise RuntimeError(
+                f"generated workflow import raised {payload.get('type')}: "
+                f"{payload.get('message')}"
+            )
+        if marker != RESULT_MARKER:
+            raise RuntimeError("generated workflow import unexpectedly requested an LLM call")
 
     def execute(
         self,
@@ -585,6 +620,7 @@ class OfficialSandboxRuntime:
                 problem=problem,
                 entry_point=entry_point,
                 transcript=transcript,
+                validate_only=False,
             )
             result = self.sandbox.run(source)
             if not result.passed:
