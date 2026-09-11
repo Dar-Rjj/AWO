@@ -261,7 +261,7 @@ python scripts/run_aflow_original.py
 真实门禁使用 1 条 validation、1 次验证和 1 个生成轮次：官方初始 round 1 与 GPT-4o-mini
 生成的 round 2 均得分 1.0；round 2 是 3 次 `CustomCodeGenerate` 加 1 次
 `ScEnsemble` 的原生 Python workflow。全程共 6 次 OpenRouter 请求、2,994 tokens，费用
-`-e.00074835`。产物位于忽略目录 `experiments/runs/aflow-original-smoke/`。
+`$0.00074835`。产物位于忽略目录 `experiments/runs/aflow-original-smoke/`。
 
 完整原版 HumanEval 搜索在 round 8 触发官方收敛判定，最佳 round 2 的 5 次 validation
 分数为 `0.848485 / 0.909091 / 0.848485 / 0.848485 / 0.878788`，均值
