@@ -9,7 +9,7 @@ from pathlib import Path
 
 from awo.benchmarks.data import load_and_normalize
 from awo.experiments.rescore import rescore_code_records
-from awo.sandbox import DockerSandbox
+from awo.sandbox import create_sandbox
 
 
 def parse_args() -> argparse.Namespace:
@@ -26,7 +26,7 @@ def main() -> int:
     report = rescore_code_records(
         args.output_dir,
         examples,
-        sandbox=DockerSandbox(),
+        sandbox=create_sandbox(),
     )
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
     return 0

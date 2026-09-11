@@ -12,7 +12,7 @@ from awo.baselines import MultiPersonaBaseline, score_baseline_result
 from awo.benchmarks.data import load_and_normalize
 from awo.config import load_config
 from awo.llm import JsonlRequestRecorder, client_from_config
-from awo.sandbox import DockerSandbox
+from awo.sandbox import create_sandbox
 
 
 def main() -> int:
@@ -40,7 +40,7 @@ def main() -> int:
     )
     example = examples[args.index]
     result = baseline.run(example)
-    sandbox = DockerSandbox() if args.dataset in {"humaneval", "mbpp"} else None
+    sandbox = create_sandbox() if args.dataset in {"humaneval", "mbpp"} else None
     score = score_baseline_result(example, result, sandbox=sandbox)
     output = result.to_dict()
     output["score"] = score.score

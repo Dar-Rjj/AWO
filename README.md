@@ -312,6 +312,43 @@ python scripts/sandbox_check.py
 只读根文件系统、UID/GID 65534、丢弃全部 capabilities、`no-new-privileges`、独立 tmpfs，
 并限制 CPU、内存、PID、文件大小、打开文件数、墙钟时间和合计输出大小。容器不挂载宿主目录。
 
+### 独立沙箱服务
+
+当 AWO 运行在无法访问 Docker daemon 的开发容器中时，可接入独立的
+`safe-python-sandbox`。该执行单元不属于 AWO，也不理解数据集、测试通过标记或模型配置；
+它只接收 Python 源码和资源上限，并返回原始退出状态、退出码、stdout、stderr 和运行时间。
+AWO 侧适配器负责组装测试以及解释结果。
+
+先在宿主机的独立沙箱目录构建并启动：
+
+```bash
+cd safe-python-sandbox
+sudo install -d -m 700 -o root -g root ../.sandbox-ipc
+docker compose up -d --build
+```
+
+然后在开发容器中启用远程后端（socket 路径按实际项目挂载位置设置）：
+
+```bash
+export AWO_SANDBOX_BACKEND=remote
+export AWO_SANDBOX_SOCKET=/root/workspace/rjj/.sandbox-ipc/sandbox.sock
+python scripts/sandbox_check.py
+```
+
+从 AWO 根目录运行时，只要 `../.sandbox-ipc/sandbox.sock` 存在，运行器也会自动选择
+远程后端，因此原有搜索和重放命令无需修改。上述环境变量用于从其他工作目录启动或显式
+固定后端。
+
+服务容器使用 `network_mode: none`、只读根文件系统、独立 `/tmp` tmpfs、cgroup
+内存/CPU/PID 限制，并仅保留降权和清理子进程所需的 `SETUID`、`SETGID` 和
+`KILL` capability。这些 capability 不会保留到 UID/GID 65534 的实验子进程中。
+停止服务可运行：
+
+```bash
+cd safe-python-sandbox
+docker compose down
+```
+
 ## 10. 计划目录
 
 ```text

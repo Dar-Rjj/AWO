@@ -27,7 +27,7 @@ from awo.artifacts import sha256_file
 from awo.benchmarks.data import load_and_normalize
 from awo.config import config_fingerprint, load_config
 from awo.llm import JsonlRequestRecorder, client_from_config
-from awo.sandbox import DockerSandbox
+from awo.sandbox import create_sandbox
 from awo.tracking import build_manifest, write_manifest
 
 METHODS = ("aflow", "adas")
@@ -86,7 +86,7 @@ async def run() -> dict[str, Any]:
     sandbox_datasets = {"humaneval", "mbpp"}
     if args.method == "aflow":
         sandbox_datasets.update({"gsm8k", "math"})
-    sandbox = DockerSandbox() if args.dataset in sandbox_datasets else None
+    sandbox = create_sandbox() if args.dataset in sandbox_datasets else None
 
     manifest = build_manifest(args.config)
     run_fingerprint = {

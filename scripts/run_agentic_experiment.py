@@ -29,7 +29,7 @@ from awo.benchmarks.data import BenchmarkExample, load_and_normalize
 from awo.config import config_fingerprint, load_config
 from awo.experiments import AgenticExperimentRunner, aflow_candidate_executor
 from awo.llm import JsonlRequestRecorder, OpenRouterClient, client_from_config
-from awo.sandbox import DockerSandbox
+from awo.sandbox import SandboxRunner, create_sandbox
 from awo.tracking import build_manifest, write_manifest
 
 METHODS = ("aflow", "aflow_official_best", "adas")
@@ -68,7 +68,7 @@ def build_parser() -> argparse.ArgumentParser:
 def aflow_executor(
     bundle: OfficialWorkflowBundle,
     public_tests: dict[str, str] | None,
-    sandbox: DockerSandbox | None,
+    sandbox: SandboxRunner | None,
 ):
     async def execute(
         client: OpenRouterClient,
@@ -162,7 +162,7 @@ def main() -> int:
     sandbox_datasets = {"humaneval", "mbpp"}
     if args.method in {"aflow", "aflow_official_best"}:
         sandbox_datasets.update({"gsm8k", "math"})
-    sandbox = DockerSandbox() if args.dataset in sandbox_datasets else None
+    sandbox = create_sandbox() if args.dataset in sandbox_datasets else None
 
     if args.method == "aflow_official_best":
         assert args.results_root is not None

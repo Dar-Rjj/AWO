@@ -13,7 +13,7 @@ from awo.baselines.runner import score_baseline_result
 from awo.benchmarks.data import load_and_normalize
 from awo.config import load_config
 from awo.llm import JsonlRequestRecorder, client_from_config
-from awo.sandbox import DockerSandbox
+from awo.sandbox import create_sandbox
 
 
 def parse_args() -> argparse.Namespace:
@@ -41,7 +41,7 @@ async def main() -> None:
     recorder = JsonlRequestRecorder(args.record_file) if args.record_file else None
     client = client_from_config(load_config(args.config), recorder=recorder)
     result = await run_architecture(candidate, client, example)
-    sandbox = DockerSandbox() if args.dataset in {"humaneval", "mbpp"} else None
+    sandbox = create_sandbox() if args.dataset in {"humaneval", "mbpp"} else None
     score = score_baseline_result(example, result, sandbox=sandbox)
     output = result.to_dict()
     output["score"] = score.score

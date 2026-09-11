@@ -12,7 +12,7 @@ from awo.benchmarks.data import load_and_normalize
 from awo.config import config_fingerprint, load_config
 from awo.experiments import MANUAL_METHODS, ManualExperimentRunner
 from awo.llm import JsonlRequestRecorder, client_from_config
-from awo.sandbox import DockerSandbox
+from awo.sandbox import create_sandbox
 from awo.tracking import build_manifest, write_manifest
 
 
@@ -49,7 +49,7 @@ def main() -> int:
         write_manifest(manifest, manifest_path)
     recorder = JsonlRequestRecorder(args.output_dir / "requests.jsonl")
     client = client_from_config(load_config(args.config), recorder=recorder)
-    sandbox = DockerSandbox() if args.dataset in {"humaneval", "mbpp"} else None
+    sandbox = create_sandbox() if args.dataset in {"humaneval", "mbpp"} else None
     summary = ManualExperimentRunner(
         client=client,
         examples=selected,

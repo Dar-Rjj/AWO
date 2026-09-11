@@ -20,7 +20,7 @@ from awo.baselines.runner import score_baseline_result
 from awo.benchmarks.data import load_and_normalize
 from awo.config import load_config
 from awo.llm import JsonlRequestRecorder, client_from_config
-from awo.sandbox import DockerSandbox
+from awo.sandbox import create_sandbox
 
 
 def main() -> int:
@@ -55,7 +55,11 @@ def main() -> int:
     examples = load_and_normalize(args.dataset_jsonl, args.dataset, args.split)
     example = examples[args.index]
     recorder = JsonlRequestRecorder(args.record_file) if args.record_file else None
-    sandbox = DockerSandbox() if args.dataset in {"humaneval", "mbpp", "gsm8k", "math"} else None
+    sandbox = (
+        create_sandbox()
+        if args.dataset in {"humaneval", "mbpp", "gsm8k", "math"}
+        else None
+    )
     runtime = AFlowRuntime(
         client_from_config(load_config(args.config), recorder=recorder),
         sandbox=sandbox,

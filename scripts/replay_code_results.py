@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 
 from awo.benchmarks.replay import replay_code_result_csv
-from awo.sandbox import DockerSandbox, SandboxConfig
+from awo.sandbox import SandboxConfig, create_sandbox
 
 
 def main() -> int:
@@ -18,7 +18,7 @@ def main() -> int:
     parser.add_argument("dataset_jsonl", type=Path)
     parser.add_argument("--timeout", type=float, default=10.0)
     args = parser.parse_args()
-    sandbox = DockerSandbox(SandboxConfig(timeout_seconds=args.timeout))
+    sandbox = create_sandbox(SandboxConfig(timeout_seconds=args.timeout))
     report = replay_code_result_csv(
         args.dataset, args.csv, args.dataset_jsonl, sandbox=sandbox
     )
