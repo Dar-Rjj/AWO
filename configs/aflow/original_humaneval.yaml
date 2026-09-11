@@ -7,6 +7,7 @@ aflow:
   upstream_commit: 289d5544cfb5698799b207b931a392aadc9e9c1a
   workflow_language: upstream_python
   sample: 4
+  initial_round: 1
   max_rounds: 20
   validation_rounds: 5
   check_convergence: true

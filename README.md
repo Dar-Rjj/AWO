@@ -233,11 +233,15 @@ API key 不得写入配置、日志、响应缓存或 Git。仓库只提交 `.en
 
 ### 7.2 搜索协议
 
-HumanEval 的新主路径直接使用 `third_party/aflow_paper` 中固定 commit
-`289d5544cfb5698799b207b931a392aadc9e9c1a` 的 Python workflow 表示和原版 XML
-optimizer prompt，不再生成或解释 `declarative_v1` JSON。
+HumanEval 的主路径直接加载 `third_party/aflow_paper` 中固定 commit
+`289d5544cfb5698799b207b931a392aadc9e9c1a` 的 `scripts.optimizer.Optimizer`，而不是
+在 AWO 中重写搜索循环。官方 `DataUtils`、`ExperienceUtils`、`EvaluationUtils`、
+`ConvergenceUtils` 和 `GraphUtils` 的非执行部分也直接使用固定源码。
 
-- 初始 workflow、operator 描述、optimizer prompt 和 `graph.py` 模板均取自固定源码；
+- 父代选择、混合概率、experience、修改去重、验证循环和收敛判断均由官方
+  `Optimizer` 及其 helper 执行；
+- 初始 workflow、operator 描述、optimizer prompt、XML formatter 和 `graph.py`
+  模板均取自固定源码；
 - optimizer 与 workflow executor 均通过 OpenRouter 使用 `openai/gpt-4o-mini`；
 - 原版 `sample=4`，混合选择参数 `alpha=0.2, lambda=0.3`；
 - `max_rounds=20` 表示初始 round 1 之后最多生成 20 个新 workflow；
@@ -245,9 +249,13 @@ optimizer prompt，不再生成或解释 `declarative_v1` JSON。
 - 使用原版 top-3、连续 5 次不变化的收敛判定；
 - 每轮保存原始 `graph.py`、`prompt.py`、父节点、修改说明、错误日志和分数。
 
-生成的 `graph.py` 在独立无网络沙箱内导入和执行。算子需要模型时，沙箱返回完整 user
-prompt，宿主调用 OpenRouter 后把响应加入 transcript 并重放；API key、网络和项目目录都不
-进入沙箱。运行命令：
+只替换两个外部边界：
+
+1. 官方 `create_llm_instance()` 由 OpenRouter 兼容对象提供；
+2. 官方 graph loader/evaluator 的动态导入和候选代码执行进入独立无网络沙箱。
+
+算子需要模型时，沙箱返回完整 user prompt，宿主调用 OpenRouter 后把响应加入 transcript
+并重放；API key、网络和项目目录都不进入沙箱。运行命令：
 
 ```bash
 set -a
@@ -258,12 +266,17 @@ python scripts/run_aflow_original.py
 
 旧 `run_search.py aflow ...` 是先前的 JSON DSL 兼容实现，不用于这次原版 HumanEval 结果。
 
-真实门禁使用 1 条 validation、1 次验证和 1 个生成轮次：官方初始 round 1 与 GPT-4o-mini
+切换前的历史真实门禁使用 1 条 validation、1 次验证和 1 个生成轮次：官方初始 round 1 与 GPT-4o-mini
 生成的 round 2 均得分 1.0；round 2 是 3 次 `CustomCodeGenerate` 加 1 次
 `ScEnsemble` 的原生 Python workflow。全程共 6 次 OpenRouter 请求、2,994 tokens，费用
 `$0.00074835`。产物位于忽略目录 `experiments/runs/aflow-original-smoke/`。
 
-完整原版 HumanEval 搜索在 round 8 触发官方收敛判定，最佳 round 2 的 5 次 validation
+下列结果由此前的“行为兼容搜索层”产生，保留作历史记录，不冒充直接调用官方
+`Optimizer` 后的新结果。切换后的默认输出目录是
+`experiments/runs/aflow-humaneval-gpt-4o-mini-upstream-optimizer/`，需要重新执行后才
+能形成新的正式结果。
+
+历史完整 HumanEval 搜索在 round 8 触发收敛判定，最佳 round 2 的 5 次 validation
 分数为 `0.848485 / 0.909091 / 0.848485 / 0.848485 / 0.878788`，均值
 `0.866667`。round 3--8 均因固定 commit 的 HumanEval `Test` 模板读取 MBPP 公测而为 0；
 未作本地修复。搜索共 1,822 次请求、616,513 tokens、费用 `$0.18856950`，API 错误 0。
@@ -271,7 +284,7 @@ python scripts/run_aflow_original.py
 按原版 `test_n=1` 冻结 round 2 后，在 131 条 HumanEval test 上得到 116 pass / 15 fail，
 pass@1 为 `0.885496`。测试共 262 次请求、107,098 tokens、费用 `$0.03025095`，执行错误
 和 API 错误均为 0。搜索与测试合计 2,084 次请求、723,611 tokens、费用 `$0.21882045`。
-完整产物位于 `experiments/runs/aflow-humaneval-gpt-4o-mini-original/`。
+历史完整产物位于 `experiments/runs/aflow-humaneval-gpt-4o-mini-original/`。
 
 ### 7.3 论文参数冲突
 

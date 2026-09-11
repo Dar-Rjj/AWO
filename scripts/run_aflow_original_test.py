@@ -24,7 +24,9 @@ def parse_args() -> argparse.Namespace:
         "search_dir",
         type=Path,
         nargs="?",
-        default=Path("experiments/runs/aflow-humaneval-gpt-4o-mini-original/search"),
+        default=Path(
+            "experiments/runs/aflow-humaneval-gpt-4o-mini-upstream-optimizer/search"
+        ),
     )
     parser.add_argument(
         "test_jsonl",
@@ -36,7 +38,9 @@ def parse_args() -> argparse.Namespace:
         "output_dir",
         type=Path,
         nargs="?",
-        default=Path("experiments/runs/aflow-humaneval-gpt-4o-mini-original/test"),
+        default=Path(
+            "experiments/runs/aflow-humaneval-gpt-4o-mini-upstream-optimizer/test"
+        ),
     )
     parser.add_argument(
         "--humaneval-public-tests",

@@ -51,6 +51,7 @@ def parse_args() -> argparse.Namespace:
         default=Path("configs/aflow/original_humaneval.yaml"),
     )
     parser.add_argument("--max-rounds", type=int)
+    parser.add_argument("--initial-round", type=int)
     parser.add_argument("--validation-rounds", type=int)
     parser.add_argument("--max-concurrency", type=int)
     parser.add_argument("--limit", type=int)
@@ -100,6 +101,11 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
     )
     search_config = OfficialSearchConfig(
         sample=int(aflow.get("sample", 4)),
+        initial_round=(
+            args.initial_round
+            if args.initial_round is not None
+            else int(aflow.get("initial_round", 1))
+        ),
         max_rounds=(
             args.max_rounds if args.max_rounds is not None else int(aflow.get("max_rounds", 20))
         ),
