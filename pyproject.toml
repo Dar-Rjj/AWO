@@ -48,6 +48,7 @@ addopts = "-ra"
 testpaths = ["tests"]
 
 [tool.ruff]
+extend-exclude = ["third_party/aflow_paper"]
 target-version = "py39"
 line-length = 100
 
