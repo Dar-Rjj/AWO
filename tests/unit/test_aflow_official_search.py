@@ -52,6 +52,7 @@ class PassingSandbox:
 
 class FakeRuntime:
     def __init__(self) -> None:
+        self.client = FakeClient()
         self.sandbox = PassingSandbox()
         self.validated: list[int] = []
 
@@ -91,6 +92,8 @@ def test_original_humaneval_config_uses_upstream_search_defaults() -> None:
     assert search.sample == 4
     assert search.max_rounds == 20
     assert search.validation_rounds == 5
+    assert aflow["optimizer_model"] == "anthropic/claude-3.5-sonnet"
+    assert aflow["executor_model"] == "openai/gpt-4o-mini"
 
 
 def test_search_constructs_exact_upstream_optimizer(tmp_path: Path) -> None:
@@ -106,7 +109,7 @@ def test_search_constructs_exact_upstream_optimizer(tmp_path: Path) -> None:
         test_code="def check(candidate): assert candidate(1, 2) == 3",
     )
     search = OfficialAFlowSearch(
-        client=FakeClient(),
+        optimizer_client=FakeClient(),
         runtime=runtime,
         examples=[example],
         output_dir=tmp_path / "search",
@@ -145,7 +148,7 @@ def test_upstream_optimizer_runs_one_experimental_round(
     )
     runtime = FakeRuntime()
     search = OfficialAFlowSearch(
-        client=FakeClient(),
+        optimizer_client=FakeClient(),
         runtime=runtime,
         examples=[example],
         output_dir=tmp_path / "search",
