@@ -1,12 +1,10 @@
 extends: ../paper/table1.yaml
 schema_version: 1
-name: aflow-humaneval-original-python-claude35-gpt4omini
+name: aflow-humaneval-original-python-gpt-4o-mini
 datasets: [humaneval]
 methods: [aflow]
 aflow:
   upstream_commit: 289d5544cfb5698799b207b931a392aadc9e9c1a
-  optimizer_model: anthropic/claude-3.5-sonnet
-  executor_model: openai/gpt-4o-mini
   workflow_language: upstream_python
   sample: 4
   initial_round: 1

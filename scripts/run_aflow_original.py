@@ -31,7 +31,7 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         nargs="?",
         default=Path(
-            "experiments/runs/aflow-humaneval-claude35-gpt4omini-upstream-optimizer/search"
+            "experiments/runs/aflow-humaneval-gpt-4o-mini-upstream-optimizer/search"
         ),
     )
     parser.add_argument(
@@ -88,22 +88,13 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
     manifest_path = args.output_dir / "manifest.json"
     if not manifest_path.exists():
         write_manifest(build_manifest(args.config), manifest_path)
-    recorder = JsonlRequestRecorder(args.output_dir / "requests.jsonl")
-    optimizer_config = dict(config)
-    optimizer_config["model"] = {
-        **dict(config["model"]),
-        "model": str(aflow["optimizer_model"]),
-    }
-    executor_config = dict(config)
-    executor_config["model"] = {
-        **dict(config["model"]),
-        "model": str(aflow["executor_model"]),
-    }
-    optimizer_client = client_from_config(optimizer_config, recorder=recorder)
-    executor_client = client_from_config(executor_config, recorder=recorder)
+    client = client_from_config(
+        config,
+        recorder=JsonlRequestRecorder(args.output_dir / "requests.jsonl"),
+    )
     sandbox = create_sandbox()
     runtime = OfficialSandboxRuntime(
-        executor_client,
+        client,
         sandbox,
         humaneval_public_tests=load_public_tests(args.humaneval_public_tests),
         mbpp_public_tests=load_public_tests(args.mbpp_public_tests),
@@ -131,7 +122,7 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
         ),
     )
     summary = await OfficialAFlowSearch(
-        optimizer_client=optimizer_client,
+        client=client,
         runtime=runtime,
         examples=examples,
         output_dir=args.output_dir,

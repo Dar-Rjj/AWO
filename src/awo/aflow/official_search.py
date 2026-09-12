@@ -338,7 +338,7 @@ class OfficialAFlowSearch:
     def __init__(
         self,
         *,
-        optimizer_client: OpenRouterClient,
+        client: OpenRouterClient,
         runtime: OfficialSandboxRuntime,
         examples: list[BenchmarkExample],
         output_dir: Path,
@@ -346,7 +346,7 @@ class OfficialAFlowSearch:
     ) -> None:
         if not examples or any(item.dataset != "humaneval" for item in examples):
             raise ValueError("upstream Python search currently requires HumanEval examples")
-        self.optimizer_client = optimizer_client
+        self.client = client
         self.runtime = runtime
         self.examples = examples
         self.output_dir = Path(output_dir)
@@ -366,15 +366,13 @@ class OfficialAFlowSearch:
 
         self._prepare_workspace()
         bindings = load_upstream_bindings()
-        optimizer_llm = _OpenRouterOptimizerBoundary(
-            self.optimizer_client, bindings.format_error_class
-        )
+        optimizer_llm = _OpenRouterOptimizerBoundary(self.client, bindings.format_error_class)
         bindings.optimizer_module.create_llm_instance = lambda _config: optimizer_llm
         optimizer = bindings.optimizer_class(
             dataset="HumanEval",
             question_type="code",
-            opt_llm_config={"model": self.optimizer_client.settings.model},
-            exec_llm_config={"model": self.runtime.client.settings.model},
+            opt_llm_config={"model": self.client.settings.model},
+            exec_llm_config={"model": self.client.settings.model},
             operators=["Custom", "CustomCodeGenerate", "ScEnsemble", "Test"],
             sample=self.config.sample,
             check_convergence=self.config.check_convergence,

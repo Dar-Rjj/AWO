@@ -2,16 +2,12 @@
 
 本仓库用于复现论文 [AFlow: Automating Agentic Workflow Generation](https://arxiv.org/abs/2410.10762) 的 Table 1 主实验及其 baselines。
 
-本项目默认通过 OpenRouter 调用模型。原版 AFlow HumanEval 路径使用
-`anthropic/claude-3.5-sonnet` 生成工作流、使用 `openai/gpt-4o-mini` 执行工作流；
-ADAS、手工 baseline、reviewer、voter 和 selector 仍使用 `openai/gpt-4o-mini`。客户端实现参考：
+本项目默认统一模型协议：AFlow optimizer、ADAS meta-agent、workflow operators、所有 baseline、reviewer、voter 和 selector 均通过 OpenRouter 调用 `openai/gpt-4o-mini`。客户端实现参考：
 
 - `/home/rjj/RealEvo/utils/llm_client/openrouter.py`
 - `/home/rjj/RealEvo/cfg/llm_client/openrouter.yaml`
 
-> 执行模型自 2026-09-07 起切换为 `openai/gpt-4o-mini`；AFlow optimizer 自
-> 2026-09-12 起切换为 `anthropic/claude-3.5-sonnet`。此前模型组合的配置、请求日志
-> 和结果报告作为历史 provenance 保留，不参与新默认 run 的缓存复用。
+> 默认模型自 2026-09-07 起切换为 `openai/gpt-4o-mini`。此前 `deepseek/deepseek-chat` 的配置、请求日志和结果报告作为历史 provenance 保留，不参与新默认 run 的缓存复用。
 
 > 当前状态：协议、工件、统一 OpenRouter 客户端、六任务 evaluator、六个手工 baseline、
 > AFlow 与 ADAS 的安全搜索/冻结/测试链路均已完成；真实 preflight 和两个 agentic
@@ -48,19 +44,15 @@ ADAS、手工 baseline、reviewer、voter 和 selector 仍使用 `openai/gpt-4o-
 
 ## 2. 与论文原始设置的差异
 
-论文 Table 1 使用 Claude 3.5 Sonnet 作为 AFlow optimizer，使用
-`gpt-4o-mini-2024-07-18` 作为 executor。当前原版 AFlow HumanEval 路径通过
-OpenRouter 使用 `anthropic/claude-3.5-sonnet` 作为 optimizer，并使用
-`openai/gpt-4o-mini` 作为 executor；服务入口和具体版本别名仍与论文环境不同。
+论文 Table 1 使用 Claude 3.5 Sonnet 作为 AFlow/ADAS optimizer，使用 `gpt-4o-mini-2024-07-18` 作为 executor。本项目自 2026-09-07 起统一使用 OpenRouter 的 `openai/gpt-4o-mini`；optimizer 仍与论文的 Claude 3.5 Sonnet 设置不同。
 
 因此本项目属于：
 
 - 数据、算法、prompt 和评测协议复现；
-- 与论文相同的模型家族分工；
+- 同模型条件下的公平受控比较；
 - 不是论文原始模型组合的逐输出 exact reproduction。
 
-最终报告必须同时列出“论文配置”和“本项目配置”，不能将 OpenRouter 模型别名的结果
-标记为原论文模型环境的逐输出 exact reproduction。
+最终报告必须同时列出“论文配置”和“本项目配置”，不能将统一 GPT-4o-mini optimizer 的结果标记为原论文模型组合的 exact reproduction。
 
 OpenRouter 的 `openai/gpt-4o-mini` 可能被路由到不同 provider。每个 run 必须记录：
 
@@ -250,8 +242,7 @@ HumanEval 的主路径直接加载 `third_party/aflow_paper` 中固定 commit
   `Optimizer` 及其 helper 执行；
 - 初始 workflow、operator 描述、optimizer prompt、XML formatter 和 `graph.py`
   模板均取自固定源码；
-- optimizer 通过 OpenRouter 使用 `anthropic/claude-3.5-sonnet`，workflow executor
-  使用 `openai/gpt-4o-mini`；
+- optimizer 与 workflow executor 均通过 OpenRouter 使用 `openai/gpt-4o-mini`；
 - 原版 `sample=4`，混合选择参数 `alpha=0.2, lambda=0.3`；
 - `max_rounds=20` 表示初始 round 1 之后最多生成 20 个新 workflow；
 - 每个 workflow 在 33 条 HumanEval validation 上独立执行 5 次；
@@ -280,8 +271,7 @@ python scripts/run_aflow_original.py
 `ScEnsemble` 的原生 Python workflow。全程共 6 次 OpenRouter 请求、2,994 tokens，费用
 `$0.00074835`。产物位于忽略目录 `experiments/runs/aflow-original-smoke/`。
 
-切换 optimizer 模型前，使用 GPT-4o-mini 直接调用官方 `Optimizer` 的完整 HumanEval
-搜索在 round 13 触发收敛，最佳 round 3
+直接调用官方 `Optimizer` 的完整 HumanEval 搜索在 round 13 触发收敛，最佳 round 3
 的 5 次 validation 分数为
 `0.848485 / 0.878788 / 0.878788 / 0.878788 / 0.848485`，均值
 `0.866667`。round 8 均值为 `0.854545`，其余生成轮次为 0：round 2 存在返回值类型
@@ -289,10 +279,6 @@ python scripts/run_aflow_original.py
 公开测试读取问题失败。搜索共 8,922 次 OpenRouter 请求，3,184,554 tokens，实际费用
 `$0.98577240`；其中 optimizer 12 次、executor 8,910 次，API 错误 0。正式产物位于
 `experiments/runs/aflow-humaneval-gpt-4o-mini-upstream-optimizer/search/`。
-
-Claude optimizer 的新默认输出目录为
-`experiments/runs/aflow-humaneval-claude35-gpt4omini-upstream-optimizer/`；模型切换
-后尚未重新运行完整搜索。
 
 下列结果由此前的“行为兼容搜索层”产生，仅保留作历史对照。
 
