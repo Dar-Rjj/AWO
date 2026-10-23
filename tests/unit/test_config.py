@@ -7,18 +7,18 @@ from awo.config import ConfigError, config_fingerprint, load_config
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
-def test_active_configs_resolve_gpt_4o_mini() -> None:
+def test_active_configs_resolve_deepseek_chat() -> None:
     expected_names = {
-        "configs/smoke.yaml": "aflow-table1-smoke-gpt-4o-mini",
-        "configs/pilot.yaml": "aflow-table1-pilot-gpt-4o-mini",
-        "configs/paper/table1.yaml": "aflow-table1-gpt-4o-mini",
+        "configs/smoke.yaml": "aflow-table1-smoke",
+        "configs/pilot.yaml": "aflow-table1-pilot",
+        "configs/paper/table1.yaml": "aflow-table1-deepseek-chat",
     }
 
     for relative_path, expected_name in expected_names.items():
         config = load_config(REPO_ROOT / relative_path)
         assert config["name"] == expected_name
         assert config["model"]["provider"] == "openrouter"
-        assert config["model"]["model"] == "openai/gpt-4o-mini"
+        assert config["model"]["model"] == "deepseek/deepseek-chat"
         assert config["model"]["temperature"] == 1.0
 
     table1 = load_config(REPO_ROOT / "configs/paper/table1.yaml")

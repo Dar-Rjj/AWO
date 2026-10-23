@@ -57,13 +57,13 @@ dropped or regenerated selectively.
 
 The full dry-run plan selects 3,613 test examples per repeat, 3 repeats, all validation examples,
 30 ADAS rounds, and 20 AFlow generated rounds with 5 validation repeats. Its implementation-level
-logical-call bound, excluding transport retries, is 445,751 to 1,827,506 requests.
+logical-call bound, excluding transport retries, is 421,397 to 1,827,506 requests.
 
 Two estimates are retained because workflow depth and prompt length evolve during search:
 
 | Estimate | Requests | Tokens | Cost (USD) |
 | --- | ---: | ---: | ---: |
-| Pilot blended rate applied to static bounds | 445,751-1,827,506 | 340M-1.395B | $160.26-$657.04 |
+| Pilot blended rate applied to static bounds | 421,397-1,827,506 | 322M-1.395B | $151.50-$657.04 |
 | Per-dataset pilot-rate point estimate | 807,134 | 649M | $302.75 |
 
 The point estimate scales every test cell by its dataset's full test size and three repeats. ADAS

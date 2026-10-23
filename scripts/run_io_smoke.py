@@ -23,7 +23,7 @@ def main() -> int:
     parser.add_argument(
         "--config",
         type=Path,
-        default=Path("configs/models/openrouter_gpt_4o_mini.yaml"),
+        default=Path("configs/models/openrouter_deepseek_chat.yaml"),
     )
     parser.add_argument("--split", choices=("validate", "test"), default="validate")
     parser.add_argument("--index", type=int, default=0)

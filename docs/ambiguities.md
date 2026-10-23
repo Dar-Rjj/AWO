@@ -11,13 +11,13 @@
 
 - 状态：`resolved-for-primary`
 - 论文：Claude 3.5 Sonnet optimizer + GPT-4o-mini executor。
-- 本项目自 2026-09-07 起：所有角色统一为 OpenRouter `openai/gpt-4o-mini`，temperature 1.0；此前 DeepSeek 运行保持历史标注。
+- 本项目主实验：所有角色统一为 OpenRouter `deepseek/deepseek-chat`，temperature 1.0；GPT-4o-mini 运行保持独立历史标注。
 - 决策：报告为统一模型协议复现，禁止标记为论文模型 exact reproduction。
 
 ## A-002：OpenRouter 模型别名漂移
 
 - 状态：`open`
-- 问题：`openai/gpt-4o-mini` 可能随时间路由到不同 provider；历史 `deepseek/deepseek-chat` 也存在同类漂移。
+- 问题：`deepseek/deepseek-chat` 可能随时间路由到不同 provider；显式 GPT-4o-mini 对照也存在同类漂移。
 - 决策：每次请求记录请求模型、返回模型、路由 provider 和时间；preflight 结果写入 run manifest。不同实际模型不得聚合为同一次实验。
 - 2026-08-09 证据：preflight 和 IO smoke 路由到 `Novita`，随后 CoT smoke 路由到
   `DeepInfra`；三者 requested/actual model 字段均为 `deepseek/deepseek-chat`。最终报告需列出

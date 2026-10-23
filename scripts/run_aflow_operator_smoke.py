@@ -27,7 +27,7 @@ def main() -> int:
     parser.add_argument(
         "--config",
         type=Path,
-        default=Path("configs/models/openrouter_gpt_4o_mini.yaml"),
+        default=Path("configs/models/openrouter_deepseek_chat.yaml"),
     )
     args = parser.parse_args()
 

@@ -1,6 +1,6 @@
 extends: ../paper/table1.yaml
 schema_version: 1
-name: aflow-humaneval-original-python-gpt-4o-mini
+name: aflow-humaneval-original-python-deepseek-chat
 datasets: [humaneval]
 methods: [aflow]
 aflow:

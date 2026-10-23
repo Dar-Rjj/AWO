@@ -25,7 +25,7 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         nargs="?",
         default=Path(
-            "experiments/runs/aflow-humaneval-gpt-4o-mini-upstream-optimizer/search"
+            "experiments/runs/aflow-humaneval-deepseek-chat-upstream-optimizer/search"
         ),
     )
     parser.add_argument(
@@ -39,7 +39,7 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         nargs="?",
         default=Path(
-            "experiments/runs/aflow-humaneval-gpt-4o-mini-upstream-optimizer/test"
+            "experiments/runs/aflow-humaneval-deepseek-chat-upstream-optimizer/test"
         ),
     )
     parser.add_argument(

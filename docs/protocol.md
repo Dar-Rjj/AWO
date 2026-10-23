@@ -2,15 +2,15 @@
 
 ## 1. 协议版本
 
-- 协议版本：`1.1.0`
-- 切换日期：`2026-09-07`
+- 协议版本：`1.2.0`
+- 恢复日期：`2026-10-24`
 - 论文版本：AFlow arXiv v4 / ICLR 2025
 - 主实验：论文 Table 1
-- 模型替换：所有 LLM 角色统一为 OpenRouter `openai/gpt-4o-mini`
+- 模型替换：所有 LLM 角色统一为 OpenRouter `deepseek/deepseek-chat`
 
 任何影响样本、prompt、模型参数、调用图、搜索预算或评分规则的改动，都必须提升协议版本，并在报告中与旧版本分开。
 
-协议 1.0.0 的 `deepseek/deepseek-chat` 配置与既有账本只作为历史结果保留；1.1.0 及后续新运行默认使用 `openai/gpt-4o-mini`，不得跨模型复用缓存或覆盖旧 run root。
+协议 1.2.0 按用户复现要求恢复 `deepseek/deepseek-chat` 为主实验模型。协议 1.1.0 的 GPT-4o-mini 运行仅作为显式历史对照；不同模型不得复用缓存或覆盖彼此的 run root。
 
 ## 2. 实验矩阵
 
@@ -43,7 +43,7 @@
 | 参数 | 值 |
 | --- | --- |
 | Provider | OpenRouter |
-| Model | `openai/gpt-4o-mini` |
+| Model | `deepseek/deepseek-chat` |
 | Base URL | `https://openrouter.ai/api/v1` |
 | Temperature | `1.0` |
 | Candidates per request | `n=1` |
@@ -138,7 +138,7 @@ Self-Refine 提前停止必须保存停止原因。MedPrompt 必须保存 shuffl
 
 - 算法：Meta Agent Search
 - 搜索轮数：30
-- optimizer/executor：OpenRouter `openai/gpt-4o-mini`
+- optimizer/executor：OpenRouter `deepseek/deepseek-chat`
 - 搜索数据：仅 validation
 - 测试：冻结最佳 agent 后独立运行 3 次
 

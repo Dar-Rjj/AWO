@@ -2,12 +2,12 @@
 
 本仓库用于复现论文 [AFlow: Automating Agentic Workflow Generation](https://arxiv.org/abs/2410.10762) 的 Table 1 主实验及其 baselines。
 
-本项目默认统一模型协议：AFlow optimizer、ADAS meta-agent、workflow operators、所有 baseline、reviewer、voter 和 selector 均通过 OpenRouter 调用 `openai/gpt-4o-mini`。客户端实现参考：
+本项目默认统一模型协议：AFlow optimizer、ADAS meta-agent、workflow operators、所有 baseline、reviewer、voter 和 selector 均通过 OpenRouter 调用 `deepseek/deepseek-chat`。客户端实现参考：
 
 - `/home/rjj/RealEvo/utils/llm_client/openrouter.py`
 - `/home/rjj/RealEvo/cfg/llm_client/openrouter.yaml`
 
-> 默认模型自 2026-09-07 起切换为 `openai/gpt-4o-mini`。此前 `deepseek/deepseek-chat` 的配置、请求日志和结果报告作为历史 provenance 保留，不参与新默认 run 的缓存复用。
+> 2026-10-24 按本次复现要求将主实验默认模型恢复为 `deepseek/deepseek-chat`。显式命名的 GPT-4o-mini 配置、请求日志和结果仅作为独立历史对照保留，不参与 DeepSeek 主实验的缓存复用。
 
 > 当前状态：协议、工件、统一 OpenRouter 客户端、六任务 evaluator、六个手工 baseline、
 > AFlow 与 ADAS 的安全搜索/冻结/测试链路均已完成；真实 preflight 和两个 agentic
@@ -44,7 +44,7 @@
 
 ## 2. 与论文原始设置的差异
 
-论文 Table 1 使用 Claude 3.5 Sonnet 作为 AFlow/ADAS optimizer，使用 `gpt-4o-mini-2024-07-18` 作为 executor。本项目自 2026-09-07 起统一使用 OpenRouter 的 `openai/gpt-4o-mini`；optimizer 仍与论文的 Claude 3.5 Sonnet 设置不同。
+论文 Table 1 使用 Claude 3.5 Sonnet 作为 AFlow/ADAS optimizer，使用 `gpt-4o-mini-2024-07-18` 作为 executor。本项目按复现要求统一使用 OpenRouter 的 `deepseek/deepseek-chat`；optimizer 和 executor 均与论文原始模型组合不同。
 
 因此本项目属于：
 
@@ -52,9 +52,9 @@
 - 同模型条件下的公平受控比较；
 - 不是论文原始模型组合的逐输出 exact reproduction。
 
-最终报告必须同时列出“论文配置”和“本项目配置”，不能将统一 GPT-4o-mini optimizer 的结果标记为原论文模型组合的 exact reproduction。
+最终报告必须同时列出“论文配置”和“本项目配置”，不能将统一 DeepSeek Chat 的结果标记为原论文模型组合的 exact reproduction。
 
-OpenRouter 的 `openai/gpt-4o-mini` 可能被路由到不同 provider。每个 run 必须记录：
+OpenRouter 的 `deepseek/deepseek-chat` 可能被路由到不同 provider。每个 run 必须记录：
 
 - 请求模型名及 API 返回的实际模型名；
 - OpenRouter 路由/provider 信息（如果响应提供）；
@@ -65,11 +65,11 @@ OpenRouter 的 `openai/gpt-4o-mini` 可能被路由到不同 provider。每个 r
 
 ### 3.1 默认配置
 
-计划配置文件：`configs/models/openrouter_gpt_4o_mini.yaml`。
+计划配置文件：`configs/models/openrouter_deepseek_chat.yaml`。
 
 ```yaml
 provider: openrouter
-model: openai/gpt-4o-mini
+model: deepseek/deepseek-chat
 base_url: https://openrouter.ai/api/v1
 temperature: 1.0
 n: 1
@@ -77,7 +77,7 @@ timeout_seconds: 120
 max_retries: 8
 ```
 
-切换默认模型时保留已注册的 `temperature: 1.0`，使所有 headline 方法继续使用一致采样参数；温度变化属于独立敏感性实验，不与模型切换混在主表。
+统一使用 `temperature: 1.0`，与 RealEvo 参考配置一致；温度变化属于独立敏感性实验，不混入主表。
 
 ### 3.2 凭据
 
@@ -242,7 +242,7 @@ HumanEval 的主路径直接加载 `third_party/aflow_paper` 中固定 commit
   `Optimizer` 及其 helper 执行；
 - 初始 workflow、operator 描述、optimizer prompt、XML formatter 和 `graph.py`
   模板均取自固定源码；
-- optimizer 与 workflow executor 均通过 OpenRouter 使用 `openai/gpt-4o-mini`；
+- optimizer 与 workflow executor 均通过 OpenRouter 使用 `deepseek/deepseek-chat`；
 - 原版 `sample=4`，混合选择参数 `alpha=0.2, lambda=0.3`；
 - `max_rounds=20` 表示初始 round 1 之后最多生成 20 个新 workflow；
 - 每个 workflow 在 33 条 HumanEval validation 上独立执行 5 次；
@@ -310,14 +310,14 @@ AFlow 混合选择参数存在三种公开值：
 1. 下载官方 AFlow 搜索轨迹和最佳 workflow。
 2. 通过兼容层修复旧 `examples.aflow`/`metagpt.ext.aflow` 导入路径。
 3. 使用统一 evaluator 重算归档分数。
-4. 使用 GPT-4o-mini 重新执行最佳 workflow。
+4. 使用 DeepSeek Chat 重新执行最佳 workflow。
 5. 将“归档答案重评分”和“新模型重新推理”分开报告。
 
 ## 8. ADAS 复现
 
 参考 [ADAS 官方仓库](https://github.com/ShengranHu/ADAS) 的 Meta Agent Search。
 
-- meta-agent 和候选 agent executor 均使用 `openai/gpt-4o-mini`；
+- meta-agent 和候选 agent executor 均使用 `deepseek/deepseek-chat`；
 - 搜索 30 轮；
 - 使用与 AFlow 相同的 validation/test split 和 evaluator；
 - 为六个数据集实现统一 adapter；
@@ -405,8 +405,8 @@ docker compose down
 ```text
 AWO/
 ├── configs/
-│   ├── models/openrouter_gpt_4o_mini.yaml      # 1.1+ 默认
-│   ├── models/openrouter_deepseek_chat.yaml    # 历史/显式实验
+│   ├── models/openrouter_deepseek_chat.yaml    # 主实验默认
+│   ├── models/openrouter_gpt_4o_mini.yaml      # 显式历史对照
 │   ├── paper/table1.yaml
 │   ├── smoke.yaml
 │   └── pilot.yaml
@@ -473,7 +473,7 @@ AWO/
 3. 实现 `preflight`：发送最小请求并验证模型、响应结构和 token usage。
 4. 将 optimizer、executor 和 baselines 注入同一个 client factory。
 
-验收：所有角色的请求日志均显示 `openai/gpt-4o-mini`，且失败不会无限重试。
+验收：所有角色的请求日志均显示 `deepseek/deepseek-chat`，且失败不会无限重试。
 
 完成记录（2026-08-09）：离线检查、15 项单元测试、lint 和 Python 3.9 编译通过；
 一次最小真实请求由 OpenRouter 路由至 `deepseek/deepseek-chat`（provider `Novita`），
@@ -896,7 +896,7 @@ GSM8K CoT-SC 1 个均因 selector 未返回 A–E；MATH ADAS 1 个因结构化 
 pilot 的 48 个分数、provider/model 审计、异常说明以及 full 预算外推见
 [`reports/table1-pilot.md`](reports/table1-pilot.md)。按逐数据集 pilot 费率外推的 full 点
 估算为约 80.7 万请求、6.49 亿 tokens、`$302.75`；静态逻辑调用上下界按 pilot 混合费率
-对应约 `$160.26-$657.04`。这些都不是硬上限，完整运行仍等待单独预算确认。
+对应约 `$151.50-$657.04`。这些都不是硬上限，完整运行仍等待单独预算确认。
 
 ### 阶段 8：完整 Table 1
 
@@ -938,7 +938,7 @@ python -m pip install --require-hashes -r requirements.lock
 python -m pip install --no-deps -e .
 
 # 模型和环境预检
-python scripts/preflight.py --config configs/models/openrouter_gpt_4o_mini.yaml
+python scripts/preflight.py --config configs/models/openrouter_deepseek_chat.yaml
 
 # 下载并校验数据/工件
 python scripts/download_data.py
@@ -1063,7 +1063,7 @@ experiments/runs/<run_id>/
 requested/actual model 均为 `deepseek/deepseek-chat`，6 条 MATH AFlow 搜索请求按协议
 fail-closed。完整命令重放保持 `12,450 -> 12,450`，未新增调用。按修正后的 ADAS
 initial-archive + generated-round 结构分层外推，full 点估算约为 807,134 次请求、6.49 亿
-tokens、`$302.75`；静态逻辑请求区间的粗略费用参考为 `$160.26-$657.04`。公式、假设、
+tokens、`$302.75`；静态逻辑请求区间的粗略费用参考为 `$151.50-$657.04`。公式、假设、
 48 个 pilot 分数和 provider 审计见 [`reports/table1-pilot.md`](reports/table1-pilot.md)。
 完整 Table 1 仍保持关闭。
 
@@ -1082,7 +1082,7 @@ tokens、`$302.75`；静态逻辑请求区间的粗略费用参考为 `$160.26-$
 | 配置 | Manual test | ADAS search | ADAS test | AFlow search | AFlow test | 合计 |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | Pilot（每任务 validation/test 各 20） | 3,000–3,600 | 1,254–8,562 | 120–1,440 | 978–7,494 | 120–1,200 | 5,472–22,296 |
-| Full（3,613 test × 3） | 270,975–325,170 | 58,268–357,008 | 10,839–130,068 | 94,830–906,870 | 10,839–108,390 | 445,751–1,827,506 |
+| Full（3,613 test × 3） | 270,975–325,170 | 33,914–357,008 | 10,839–130,068 | 94,830–906,870 | 10,839–108,390 | 421,397–1,827,506 |
 
 区间上界按 AFlow 10 节点、ADAS 12 节点以及最大候选生成尝试数计算，明显偏保守。ADAS
 下界按每个 architecture/sample 至少发起首节点计算：结构化输出 fail-closed 时不会调用
@@ -1090,7 +1090,7 @@ tokens、`$302.75`；静态逻辑请求区间的粗略费用参考为 `$160.26-$
 budget。完整 Table 1 在获得该实际费用报告及用户确认前保持关闭。
 
 当前 pilot 实测混合费率为每次请求约 763 tokens、`$0.00035953`。直接映射上述 full
-逻辑调用区间得到约 3.40 亿–13.95 亿 tokens、`$160.26-$657.04`；按每个数据集的测试
+逻辑调用区间得到约 3.22 亿–13.95 亿 tokens、`$151.50-$657.04`；按每个数据集的测试
 费率、full split 大小、3 次重复以及 full 搜索轮次/validation repeats 外推的点估算为
 约 80.7 万次请求、6.49 亿 tokens、`$302.75`。详细假设见
 `reports/table1-pilot.md`，执行前还应为 workflow 变深、长上下文、路由价格变化和重试
@@ -1100,7 +1100,7 @@ budget。完整 Table 1 在获得该实际费用报告及用户确认前保持�
 
 - 六个数据集的文件数量、split 和 SHA256 可验证；
 - 统一 evaluator 通过归档结果和边界样例测试；
-- 所有新默认模型调用均走 OpenRouter `openai/gpt-4o-mini`；
+- 所有主实验模型调用均走 OpenRouter `deepseek/deepseek-chat`；
 - 所有方法使用相同模型配置和错误计分规则；
 - validation/test 无泄漏；
 - 生成代码只能在安全沙箱运行；
