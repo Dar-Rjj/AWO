@@ -885,6 +885,19 @@ GSM8K CoT-SC 1 个均因 selector 未返回 A–E；MATH ADAS 1 个因结构化 
 失败处理，不用于论文效果结论；聚合报告位于被 Git 忽略的
 `reports/generated/table1-smoke/`。
 
+20 样本/任务的付费 pilot 也已在 commit `14e0acaf6b20a5c70ee49d0fab47a6c1ffdb6312`
+上完成：30/30 个 job、12 个冻结候选、48 个结果单元格和 960 条测试记录齐全。实际共
+12,450 次请求、9,502,554 tokens、`$4.4761399411`；其中 validation search 为 8,311 次、
+6,254,096 tokens、`$2.9852652005`，冻结测试为 4,139 次、3,248,458 tokens、
+`$1.4908747406`。测试请求 4,139/4,139 成功；搜索 8,305/8,311 成功，6 条 MATH AFlow
+调用按协议 fail-closed。成功请求的 requested/actual model 均为
+`deepseek/deepseek-chat`。完整命令重放前后请求数严格保持 `12,450 -> 12,450`。
+
+pilot 的 48 个分数、provider/model 审计、异常说明以及 full 预算外推见
+[`reports/table1-pilot.md`](reports/table1-pilot.md)。按逐数据集 pilot 费率外推的 full 点
+估算为约 80.7 万请求、6.49 亿 tokens、`$302.75`；静态逻辑调用上下界按 pilot 混合费率
+对应约 `$160.26-$657.04`。这些都不是硬上限，完整运行仍等待单独预算确认。
+
 ### 阶段 8：完整 Table 1
 
 1. 锁定代码 commit、配置和数据 manifest。
@@ -1043,15 +1056,16 @@ experiments/runs/<run_id>/
 
 ## 14. 预算与运行门槛
 
-### Pilot 实测状态（2026-08-30）
+### Pilot 最终状态（2026-10-24）
 
-六任务 pilot 已完成 30/30 个编排阶段、48/48 个结果单元和 960/960 个测试记录。正式实验
-共 12,378 次 `deepseek/deepseek-chat` 请求、9,151,652 tokens、$4.327683；请求状态全部
-为 `ok`，requested/actual model 完全一致。相同命令账本重放前后的请求数与组合 SHA256
-完全不变。按数据集、方法、测试规模和搜索轮数分层外推，full 中心估计约为 801,511 次
-请求、621,937,702 tokens、$291.15；结合静态逻辑请求区间的粗略费用参考为
-$147.33–$638.95。公式、假设和 provider 审计见
-[`reports/table1-pilot-budget.md`](reports/table1-pilot-budget.md)。完整 Table 1 仍保持关闭。
+六任务 pilot 已完成 30/30 个编排阶段、48/48 个结果单元和 960/960 个测试记录。最终本地
+账本共 12,450 次请求、9,502,554 tokens、`$4.476140`；其中 12,444 次成功请求的
+requested/actual model 均为 `deepseek/deepseek-chat`，6 条 MATH AFlow 搜索请求按协议
+fail-closed。完整命令重放保持 `12,450 -> 12,450`，未新增调用。按修正后的 ADAS
+initial-archive + generated-round 结构分层外推，full 点估算约为 807,134 次请求、6.49 亿
+tokens、`$302.75`；静态逻辑请求区间的粗略费用参考为 `$160.26-$657.04`。公式、假设、
+48 个 pilot 分数和 provider 审计见 [`reports/table1-pilot.md`](reports/table1-pilot.md)。
+完整 Table 1 仍保持关闭。
 
 六个手工 baseline 在 3,613 个测试样本上独立运行 3 次，预计可能超过 30 万次 LLM 请求；这还不包括：
 
@@ -1068,12 +1082,19 @@ $147.33–$638.95。公式、假设和 provider 审计见
 | 配置 | Manual test | ADAS search | ADAS test | AFlow search | AFlow test | 合计 |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | Pilot（每任务 validation/test 各 20） | 3,000–3,600 | 1,254–8,562 | 120–1,440 | 978–7,494 | 120–1,200 | 5,472–22,296 |
-| Full（3,613 test × 3） | 270,975–325,170 | 33,914–357,008 | 10,839–130,068 | 94,830–906,870 | 10,839–108,390 | 421,397–1,827,506 |
+| Full（3,613 test × 3） | 270,975–325,170 | 58,268–357,008 | 10,839–130,068 | 94,830–906,870 | 10,839–108,390 | 445,751–1,827,506 |
 
 区间上界按 AFlow 10 节点、ADAS 12 节点以及最大候选生成尝试数计算，明显偏保守。ADAS
 下界按每个 architecture/sample 至少发起首节点计算：结构化输出 fail-closed 时不会调用
 后续 DAG 节点。实际 token、费用和路由 provider 必须以 pilot 审计日志为准，再外推 full
 budget。完整 Table 1 在获得该实际费用报告及用户确认前保持关闭。
+
+当前 pilot 实测混合费率为每次请求约 763 tokens、`$0.00035953`。直接映射上述 full
+逻辑调用区间得到约 3.40 亿–13.95 亿 tokens、`$160.26-$657.04`；按每个数据集的测试
+费率、full split 大小、3 次重复以及 full 搜索轮次/validation repeats 外推的点估算为
+约 80.7 万次请求、6.49 亿 tokens、`$302.75`。详细假设见
+`reports/table1-pilot.md`，执行前还应为 workflow 变深、长上下文、路由价格变化和重试
+预留明确余量。
 
 ## 15. 完成标准
 
